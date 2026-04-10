@@ -1,0 +1,154 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .module-container {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        border: 1px solid #000;
+        background: #e0e0e0;
+        font-family: Arial, sans-serif;
+    }
+
+    .module-header {
+        background: #333;
+        color: #fff;
+        padding: 5px 10px;
+        text-align: center;
+        font-size: 14px;
+        border-bottom: 1px solid #000;
+    }
+
+    .module-image-container {
+        width: 100%;
+        border-bottom: 1px solid #000;
+    }
+
+    .module-image {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .option-row {
+        background: #e0e0e0;
+        border-bottom: 1px solid #000;
+        padding: 5px 10px;
+    }
+
+    .option-row:last-child {
+        border-bottom: none;
+    }
+
+    .option-link {
+        color: #555;
+        text-decoration: underline;
+        font-size: 12px;
+        display: block;
+    }
+
+    .option-link:hover {
+        color: #000;
+    }
+
+    .inactive-link {
+        color: #999;
+        text-decoration: none;
+        font-size: 12px;
+        cursor: not-allowed;
+        display: inline-block;
+        position: relative;
+    }
+
+    .cooldown-inline {
+        color: #ff8800;
+        font-size: 11px;
+        margin-left: 5px;
+    }
+    .cooldown-inline svg {
+        width: 12px;
+        height: 12px;
+        vertical-align: middle;
+        fill: #ff8800;
+        margin-right: 3px;
+    }
+</style>
+
+<div class="p-10" style="background:#e0e0e0;">
+    <div class="module-container">
+        <div class="module-header">
+            Válassz járműlopási módszert:
+        </div>
+        
+        <div class="module-image-container">
+            <img src="/images/car_theft_header.jpg" alt="Car Theft" class="module-image" style="background:#555; height:200px; object-fit:cover;">
+        </div>
+
+        <div class="option-row">
+            {% if user.has_car_theft_cooldown %}
+                <span class="inactive-link" id="car-theft-cooldown-link" data-cooldown-ts="{{ (user.car_theft_cooldown_until ~ ' UTC')|date('U') }}">
+                    Egy gengszter járművének az ellopása az utcáról.
+                    <span class="cooldown-inline">
+                        <svg viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                        <span id="car-theft-cd-timer">--:--</span>
+                    </span>
+                </span>
+            {% else %}
+                <a href="/autolopas/utca" class="option-link" hx-boost="true" hx-target="#game-content">Egy gengszter járművének az ellopása az utcáról.</a>
+            {% endif %}
+        </div>
+        
+        <div class="option-row">
+            {% if user.has_car_theft_cooldown %}
+                <span class="inactive-link" id="dealership-cooldown-link" data-cooldown-ts="{{ (user.car_theft_cooldown_until ~ ' UTC')|date('U') }}">
+                    Új jármű ellopása egy szalonból.
+                    <span class="cooldown-inline">
+                        <svg viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                        <span id="dealership-cd-timer">--:--</span>
+                    </span>
+                </span>
+            {% else %}
+                <a href="/autolopas/szalon" class="option-link" hx-boost="true" hx-target="#game-content">Új jármű ellopása egy szalonból.</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.has_car_theft_cooldown %}
+<script>
+(function() {
+    // Generic cooldown timer for both street and dealership links
+    var timers = [
+        { linkId: 'car-theft-cooldown-link', timerId: 'car-theft-cd-timer' },
+        { linkId: 'dealership-cooldown-link', timerId: 'dealership-cd-timer' }
+    ];
+
+    timers.forEach(function(cfg) {
+        var el = document.getElementById(cfg.linkId);
+        var timer = document.getElementById(cfg.timerId);
+        if (!el || !timer) return;
+
+        var targetTs = parseInt(el.getAttribute('data-cooldown-ts'), 10);
+
+        function tick() {
+            var now = window.NetMafia && window.NetMafia.now ? window.NetMafia.now() : Math.floor(Date.now() / 1000);
+            var diff = targetTs - now;
+            if (diff <= 0) {
+                window.location.reload();
+                return;
+            }
+            var m = Math.floor(diff / 60);
+            var s = diff % 60;
+            timer.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        tick();
+        setInterval(tick, 1000);
+    });
+})();
+</script>
+{% endif %}
+
+{% endblock %}
+

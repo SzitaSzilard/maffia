@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMafia - Regisztráció (Mockup)</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* === REGISZTRÁCIÓS OLDAL EGYEDI HIBAKIIRÁS ===
+           Elkülönítve a globális .alert-* osztályoktól (azok pozíció:fixed lebőgő sávok).
+           Ezek inline, a form felett jelennek meg. */
+        .login-hiba {
+            margin-bottom: 10px;
+            padding: 6px 10px;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: Verdana, sans-serif;
+            text-align: center;
+        }
+        .login-hiba--error {
+            color: #cc0000;
+            background-color: #fff0f0;
+            border: 1px solid #e09090;
+        }
+        .login-hiba--warning {
+            color: #7a5c00;
+            background-color: #fffbe6;
+            border: 1px solid #e0c060;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="fokontener">
+        <div class="login-doboz">
+            <div class="doboz-fejlec">
+                NetMafia - Csatlakozz a Családhoz
+            </div>
+
+            <div class="doboz-tartalom">
+                
+                {# === REGISZTRÁCIÓ EGYEDI HIBAKEZELÉS ===
+                   _reg_msg session kulcsból jön, FlashMiddleware nem érinti.
+                #}
+                {% if reg_msg is not null %}
+                    {% if reg_msg.type == 'error' %}
+                    <div class="login-hiba login-hiba--error">
+                        {{ reg_msg.message }}
+                    </div>
+                    {% elseif reg_msg.type == 'warning' %}
+                    <div class="login-hiba login-hiba--warning">
+                        ⚠️ {{ reg_msg.message }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+                <p class="bevezeto-szoveg">
+                    Kezdd el karriered a <span>NetMafia</span> világában! Válassz területet, építsd ki a hálózatod, és
+                    urald az alvilágot.
+                </p>
+
+                <form action="/register" method="POST">
+                    
+                    {{ csrf.keys|raw }}
+
+                    <div class="urlap-sor">
+                        <label for="nev">Felhasználónév:</label>
+                        <input type="text" id="nev" name="username" placeholder="GengszterNév" value="{{ last_username }}">
+                    </div>
+
+                    <div class="urlap-sor">
+                        <label for="email">E-mail cím:</label>
+                        <input type="email" id="email" name="email" placeholder="maffia@titok.hu" value="{{ last_email }}">
+                    </div>
+
+                    <div class="urlap-sor">
+                        <label for="jelszo">Jelszó:</label>
+                        <input type="password" id="jelszo" name="password">
+                    </div>
+
+                    <div class="urlap-sor">
+                        <label for="jelszo2">Jelszó újra:</label>
+                        <input type="password" id="jelszo2" name="password_confirm">
+                    </div>
+
+                    <div class="urlap-sor">
+                        <label for="orszag">Ország:</label>
+                        <select id="orszag" name="country_code">
+                            {% for country in countries %}
+                                <option value="{{ country.code }}">{{ country.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="gomb-tarolo">
+                        <button type="submit" hx-disabled-elt="this">Regisztráció</button>
+                    </div>
+                </form>
+
+                <div
+                    style="font-size: 11px; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <a href="/login" style="text-decoration: none; color: #555;">Vissza a belépéshez</a>
+                </div>
+            </div>
+        </div>
+
+        <div style="font-size: 10px; color: #666; margin-top: 5px;">
+            Kapcsolat: admin@netmafia.hu | ÁSZF
+        </div>
+    </div>
+
+</body>
+
+</html>

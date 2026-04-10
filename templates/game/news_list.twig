@@ -1,0 +1,91 @@
+<style>
+/* ========================================================== */
+/* --- HÍREK DOBOZA (KÁRTYÁS ELRENDEZÉS) --- */
+/* ========================================================== */
+.news-outer {
+    background-color: #ededed;
+    padding: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #cccccc;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.18);
+}
+.news-inner {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    padding: 15px 25px;
+}
+hr.dashed-line {
+    border: none;
+    border-top: 1px dashed #aaaaaa;
+    margin: 30px 0;
+}
+.news-item p {
+    line-height: 1.5;
+    margin-bottom: 10px;
+    color: #333333;
+}
+.news-item ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0;
+}
+.news-item ul li {
+    margin-bottom: 5px;
+    line-height: 1.5;
+    color: #333333;
+}
+</style>
+
+<div id="news-container">
+    <div class="dark-header" style="position: relative; text-align: center;">
+        Hírek
+        {% if user.is_admin %}
+            <a href="#" 
+               hx-get="/game/news/form" 
+               hx-target="#news-list-content" 
+               hx-swap="innerHTML"
+               style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #ffcc00; font-size: 11px; text-decoration: none;">
+               [ Új bejegyzés ]
+            </a>
+        {% endif %}
+    </div>
+    
+    <div id="news-list-content">
+        <div class="news-outer">
+            <div class="news-inner">
+                {% if news is empty %}
+                    <p class="text-muted text-center" style="margin: 0; padding: 10px;">Nincsenek még hírek.</p>
+                {% else %}
+                    {% for item in news %}
+                        <div class="news-item">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="font-weight: bold; font-size: 13px; color: #111; flex-grow: 1; padding-right: 15px; margin-top: 5px;">{{ item.title }}</div>
+                                {% if user.is_admin %}
+                                    <div class="admin-controls" style="font-size: 11px; margin-top: 5px; flex-shrink: 0; display: flex; gap: 8px;">
+                                        <a href="#" class="text-primary text-decoration-none" style="margin-right: 8px; color: #14406a;"
+                                           hx-get="/game/news/{{ item.id }}/edit"
+                                           hx-target="#news-list-content"
+                                           hx-swap="innerHTML">
+                                           [ Szerkesztés ]
+                                        </a>
+                                        <a href="#" class="text-danger text-decoration-none delete-container" style="color: #c00;"
+                                           hx-get="/game/news/{{ item.id }}/delete-confirm"
+                                           hx-target="this"
+                                           hx-swap="outerHTML">
+                                           [ Törlés ]
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="news-content">
+                                {{ item.content|nl2br|raw }}
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="dashed-line">{% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

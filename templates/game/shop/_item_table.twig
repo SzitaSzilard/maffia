@@ -1,0 +1,65 @@
+<table class="table table-bordered table-striped" style="color: #ccc;">
+    <thead>
+        <tr>
+            <th>Név</th>
+            <th>Ár</th>
+            <th>Készlet</th>
+            {% if showStats %}
+                <th>Támadás</th>
+                <th>Védelem</th>
+            {% endif %}
+            {% if isJet is defined and isJet %}
+                <th>Várakozási idő</th>
+            {% endif %}
+            <th width="150">Művelet</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>
+                    <span class="shop-item-name">
+                        {{ item.name|e }}
+                        {% if item.image_url %}
+                            <div class="shop-item-tooltip">
+                                <img src="{{ item.image_url|e }}" alt="{{ item.name|e }}">
+                            </div>
+                        {% endif %}
+                    </span>
+                    {% if item.effects and item.effects|length > 0 and item.effects[0].effect_type %}
+                        <div style="font-size: 0.8em; color: #aaa;">
+                            ✨ Bónusz: {{ item.effects[0].value }} {{ item.effects[0].effect_type == 'cooldown_reduction' ? '%' : '' }}
+                            {% if item.effects[0].duration > 0 %} ({{ item.effects[0].duration }} perc){% endif %}
+                        </div>
+                    {% endif %}
+                </td>
+                <td><span class="text-success">${{ item.price|number_format }}</span></td>
+                <td>{{ item.stock > 0 ? item.stock ~ ' db' : '<span class="text-danger">Kifogyott</span>' }}</td>
+                {% if showStats %}
+                    <td>{{ item.attack }}</td>
+                    <td>{{ item.defense }}</td>
+                {% endif %}
+                {% if isJet is defined and isJet %}
+                    <td>{{ item.defense }} perc</td>
+                {% endif %}
+                <td>
+                    {% if item.stock > 0 %}
+                        {# [2026-02-28] FIX: CSRF token + dupla kattintás védelem #}
+                        <form hx-post="/vasarlas/buy" hx-target="#shop-container" hx-swap="afterbegin" style="margin: 0; display: flex; gap: 5px;">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="number" name="quantity" value="1" min="1" max="{{ item.stock }}" class="form-control input-sm" style="width: 60px; background: #222; color: #fff; border: 1px solid #444;" {{ item.stackable == 0 ? 'readonly' : '' }}>
+                            <button type="submit" class="btn btn-success btn-sm" hx-disabled-elt="this">Megvesz</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-sm btn-default" disabled>Ellefogyott</button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="{{ (showStats ? 6 : (isJet is defined and isJet ? 5 : 4)) }}" class="text-center text-muted">Jelenleg nincs elérhető tárgy ebben a kategóriában.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

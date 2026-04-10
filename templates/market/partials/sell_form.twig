@@ -1,0 +1,36 @@
+{% if not canSell %}
+    <div style="background: #333 !important; color: white !important; padding: 20px !important; text-align: center !important; border: 1px solid #555 !important;">
+        Az eladáshoz szükséges minimum rang: <strong>Gengszter</strong>
+    </div>
+{% else %}
+    <div id="market-sell-container" 
+         hx-on:clear-sell-form="document.getElementById('sell-item-container').innerHTML = ''; document.getElementById('sell-configure-container').innerHTML = '';">
+        <fieldset style="border: 1px solid #555 !important; background: #eee !important; padding: 10px !important; margin-bottom: 20px !important; border-radius: 2px !important;">
+        <legend style="margin-bottom: 0px !important; font-weight: bold !important; font-size: 13px !important; color: #000 !important; float: none !important; width: auto !important; padding: 0 5px !important;">Mit szeretnél eladni?</legend>
+        <ul style="font-size: 13px !important; margin: 10px 0 10px 15px !important; padding: 0 !important; list-style-type: none !important;">
+            {% for key, name in categories %}
+                <li style="margin-bottom: 2px !important;">
+                    <a href="#" 
+                       style="color: #666 !important; text-decoration: underline !important;"
+                       hx-get="/piac/eladas/kategoria/{{ key }}"
+                       hx-target="#sell-item-container"
+                       hx-swap="innerHTML">
+                    {% if key == 'weapon' %}Fegyvert
+                    {% elseif key == 'armor' %}Védelmi eszközt
+                    {% elseif key == 'consumable' %}Elfogyasztható cuccot
+                    {% elseif key == 'misc' %}Egyéb cuccot
+                    {% elseif key == 'vehicle' %}Járművet
+                    {% elseif key == 'car_part' %}Autóalkatrészt
+                    {% elseif key == 'bullet' %}Töltényt
+                    {% elseif key == 'credit' %}Kreditet
+                    {% endif %}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </fieldset>
+
+    <div id="sell-item-container"></div>
+    <div id="sell-configure-container"></div>
+    <div id="alert-container"></div>
+    </div>
+{% endif %}

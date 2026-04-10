@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Oldal nem található | NetMafia</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            border: 2px solid #8B0000;
+            max-width: 500px;
+        }
+        .error-code {
+            font-size: 100px;
+            color: #8B0000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 0;
+        }
+        .error-title {
+            color: #aa0000;
+            font-family: 'Impact', sans-serif;
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        .error-path {
+            background: #2a2a2a;
+            color: #ff6b6b;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 30px;
+            font-family: monospace;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            text-transform: uppercase;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: linear-gradient(to bottom, #aa0000, #880000);
+            color: white;
+            border: 2px solid #660000;
+        }
+        .btn-secondary {
+            background: linear-gradient(to bottom, #666, #444);
+            color: white;
+            border: 2px solid #333;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">🔫 404</div>
+        
+        <h1 class="error-title">Hé, GENGSZTER!</h1>
+        
+        <p class="error-message">
+            Ez az oldal eltűnt... valószínűleg a konkurencia elintézte. 💀
+        </p>
+
+        <div class="error-path">{{ path|default('/ismeretlen') }}</div>
+
+        <div>
+            <a href="/game" class="btn btn-primary">← Vissza a játékba</a>
+            <a href="/login" class="btn btn-secondary">Bejelentkezés</a>
+        </div>
+    </div>
+</body>
+</html>

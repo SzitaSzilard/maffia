@@ -1,0 +1,307 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .shop-container {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        color: #000;
+        font-family: Arial, sans-serif;
+    }
+    .shop-category-header {
+        background: #333;
+        color: #dcb37b;
+        text-align: center;
+        padding: 5px;
+        font-weight: bold;
+        font-size: 16px;
+        border: 1px solid #000;
+        border-bottom: none;
+        margin-top: 20px;
+    }
+    .shop-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #eee;
+        border: 1px solid #000;
+        margin-bottom: 0;
+    }
+    .shop-table th, .shop-table td {
+        border: 1px solid #555;
+        padding: 4px 8px;
+        text-align: left;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    .shop-table th {
+        background: #fff;
+        font-weight: bold;
+    }
+    .shop-table th .fa-sort {
+        float: right;
+        margin-top: 3px;
+        color: #000;
+    }
+    .shop-table td.text-center {
+        text-align: center;
+    }
+    .shop-item-name {
+        font-style: italic;
+        font-weight: bold;
+        cursor: pointer;
+        position: relative;
+    }
+    .shop-item-tooltip {
+        display: none;
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        border: 1px solid #555;
+        padding: 5px;
+        border-radius: 4px;
+        z-index: 100;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        white-space: nowrap;
+    }
+    .shop-item-tooltip img {
+        max-width: 250px;
+        max-height: 250px;
+        display: block;
+    }
+    .shop-item-name:hover .shop-item-tooltip {
+        display: block;
+    }
+    .buy-btn {
+        background: #eee;
+        border: 1px solid #999;
+        font-size: 11px;
+        padding: 2px 5px;
+        cursor: pointer;
+        width: 100%;
+    }
+    .buy-btn:hover {
+        background: #ddd;
+    }
+    .buy-form {
+        margin: 0;
+        display: flex;
+        gap: 5px;
+    }
+    .qty-input {
+        width: 40px;
+        text-align: center;
+        border: 1px solid #999;
+        font-size: 11px;
+    }
+</style>
+
+<div class="shop-container" id="shop-container" hx-get="/vasarlas" hx-trigger="reloadShop from:body" hx-swap="outerHTML">
+
+    <!-- Fegyverek -->
+    <div class="shop-category-header" style="margin-top: 0;">Fegyverek</div>
+    <table class="shop-table">
+        <thead>
+            <tr>
+                <th>Típus <i class="fa fa-sort"></i></th>
+                <th>Ár <i class="fa fa-sort"></i></th>
+                <th>Készlet <i class="fa fa-sort"></i></th>
+                <th>Támadás <i class="fa fa-sort"></i></th>
+                <th>Védelem <i class="fa fa-sort"></i></th>
+                <th width="80">Vétel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in weapons %}
+            <tr>
+                <td>
+                    <span class="shop-item-name">
+                        {{ item.name|e }}
+                        {% if item.image_url %}
+                            <div class="shop-item-tooltip">
+                                <img src="{{ item.image_url|e }}" alt="{{ item.name|e }}">
+                            </div>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>${{ item.price|number_format }}</td>
+                <td>{{ item.stock }} db</td>
+                <td>{{ item.attack }}</td>
+                <td>{{ item.defense }}</td>
+                <td>
+                    {% if item.stock > 0 %}
+                        <form hx-post="/vasarlas/buy" hx-target="#flash-container" hx-swap="innerHTML" class="buy-form" hx-disabled-elt="button[type='submit']">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="buy-btn">Megvesz</button>
+                        </form>
+                    {% else %}
+                        Nincs
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center">Nincs találat</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Védelmi eszközök -->
+    <div class="shop-category-header">Védelmi eszközök</div>
+    <table class="shop-table">
+        <thead>
+            <tr>
+                <th>Típus <i class="fa fa-sort"></i></th>
+                <th>Ár <i class="fa fa-sort"></i></th>
+                <th>Készlet <i class="fa fa-sort"></i></th>
+                <th>Támadás <i class="fa fa-sort"></i></th>
+                <th>Védelem <i class="fa fa-sort"></i></th>
+                <th width="80">Vétel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in armors %}
+            <tr>
+                <td>
+                    <span class="shop-item-name">
+                        {{ item.name|e }}
+                        {% if item.image_url %}
+                            <div class="shop-item-tooltip"><img src="{{ item.image_url|e }}" alt="{{ item.name|e }}"></div>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>${{ item.price|number_format }}</td>
+                <td>{{ item.stock }} db</td>
+                <td>{{ item.attack }}</td>
+                <td>{{ item.defense }}</td>
+                <td>
+                    {% if item.stock > 0 %}
+                        <form hx-post="/vasarlas/buy" hx-target="#flash-container" hx-swap="innerHTML" class="buy-form">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="buy-btn">Megvesz</button>
+                        </form>
+                    {% else %}
+                        Nincs
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center">Nincs találat</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Egyéb cuccok -->
+    <div class="shop-category-header">Egyéb cuccok</div>
+    <table class="shop-table">
+        <thead>
+            <tr>
+                <th>Típus <i class="fa fa-sort"></i></th>
+                <th>Ár <i class="fa fa-sort"></i></th>
+                <th>Készlet <i class="fa fa-sort"></i></th>
+                <th>Info <i class="fa fa-sort"></i></th>
+                <th width="120">Vétel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in consumables %}
+            <tr>
+                <td>
+                    <span class="shop-item-name">
+                        {{ item.name|e }}
+                        {% if item.image_url %}
+                            <div class="shop-item-tooltip"><img src="{{ item.image_url|e }}" alt="{{ item.name|e }}"></div>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>${{ item.price|number_format }}</td>
+                <td>{{ item.stock }} db</td>
+                <td>
+                    {% if item.effects and item.effects|length > 0 and item.effects[0].effect_type %}
+                        Bónusz: {{ item.effects[0].value }} {{ item.effects[0].effect_type == 'cooldown_reduction' ? '%' : '' }}
+                        {% if item.effects[0].duration > 0 %} ({{ item.effects[0].duration }} perc){% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.stock > 0 %}
+                        <form hx-post="/vasarlas/buy" hx-target="#flash-container" hx-swap="innerHTML" class="buy-form">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="number" name="quantity" value="1" min="1" max="{{ item.stock }}" class="qty-input">
+                            <button type="submit" class="buy-btn">Megvesz</button>
+                        </form>
+                    {% else %}
+                        Nincs
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center">Nincs találat</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Magánrepülők -->
+    <div class="shop-category-header">Magánrepülők</div>
+    <table class="shop-table">
+        <thead>
+            <tr>
+                <th>Típus <i class="fa fa-sort"></i></th>
+                <th>Ár <i class="fa fa-sort"></i></th>
+                <th>Utazás utáni várakozási idő <i class="fa fa-sort"></i></th>
+                <th width="80">Vétel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in jets %}
+            <tr>
+                <td>
+                    <span class="shop-item-name">
+                        {{ item.name|e }}
+                        {% if item.image_url %}
+                            <div class="shop-item-tooltip"><img src="{{ item.image_url|e }}" alt="{{ item.name|e }}"></div>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>${{ item.price|number_format }}</td>
+                <td>{{ item.defense }} perc</td>
+                <td>
+                    {% if item.stock > 0 %}
+                        <form hx-post="/vasarlas/buy" hx-target="#flash-container" hx-swap="innerHTML" class="buy-form">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="buy-btn">Megvesz</button>
+                        </form>
+                    {% else %}
+                        Nincs
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center">Nincs találat</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 30px; text-align: center; font-style: italic; font-size: 13px;">
+        Következő készletfeltöltés: <strong>{{ next_restock ? next_restock|e : '-' }}</strong>
+        
+        {% if user.is_admin %}
+            <div class="mt-15">
+                <a href="/vasarlas/admin" style="color: #6a5acd; text-decoration: none;">
+                    Feltöltés (Admin)
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

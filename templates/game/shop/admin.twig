@@ -1,0 +1,234 @@
+{% extends "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .admin-container {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        background: #eee; /* Light background for the outer part as in screenshot */
+        padding-top: 20px;
+    }
+    .admin-header {
+        background: #333;
+        color: #fff;
+        font-weight: bold;
+        padding: 5px 10px;
+        font-size: 16px;
+        border: 1px solid #111;
+        border-bottom: none;
+    }
+    .admin-body {
+        background: #2b2e35;
+        border: 1px solid #111;
+        padding: 0;
+    }
+    .admin-form-group {
+        display: flex;
+        border-bottom: 1px solid #111;
+        align-items: center;
+    }
+    .admin-form-group label {
+        width: 150px;
+        background: #2b2e35;
+        padding: 5px 10px;
+        margin: 0;
+        font-weight: normal;
+        font-size: 13px;
+    }
+    .admin-form-group input[type="text"],
+    .admin-form-group input[type="number"],
+    .admin-form-group select,
+    .admin-form-group input[type="file"] {
+        flex: 1;
+        background: #1a1a1a;
+        color: #ccc;
+        border: 1px solid #000;
+        padding: 3px 5px;
+        font-size: 13px;
+        border-radius: 0;
+        height: 24px;
+        margin: 2px;
+        max-width: 250px;
+    }
+    .admin-form-group input[type="file"] {
+        padding: 0;
+        border: none;
+        background: transparent;
+        height: auto;
+    }
+    .admin-footer {
+        display: flex;
+        background: #2b2e35;
+        padding: 0;
+    }
+    .admin-btn {
+        background: #eee;
+        color: #000;
+        border: 1px solid #999;
+        padding: 4px 15px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .admin-btn:hover {
+        background: #fff;
+    }
+    .restock-container {
+        padding: 10px;
+        border-bottom: 2px solid #5a5a5a;
+    }
+    .restock-container h4 {
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="admin-container">
+    <div class="admin-header">Admin - Új tárgy feltöltése a boltba</div>
+    
+    <div class="admin-body">
+
+        <!-- RESTOCK DATE FORM -->
+        <div class="restock-container">
+            <h4>Következő Készletfeltöltés Ideje</h4>
+            <div style="font-size: 12px; margin-bottom: 5px;">Dátum és Idő (pl. 2026.10.12. 15:30 vagy Holnap este 8)</div>
+            <form action="/vasarlas/admin" method="POST" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+    {{ csrf.keys|raw }}
+                <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                <input type="hidden" name="action" value="update_restock">
+                <input type="text" name="next_restock" style="background: #111; color: #666; border: 1px solid #000; padding: 3px 5px; width: 250px; font-size: 12px;" placeholder="Szabadon írható szöveg..." required>
+                <button type="submit" class="admin-btn" hx-disabled-elt="this">Beállítás</button>
+            </form>
+        </div>
+
+        <!-- ITEM CREATION FORM -->
+        <form action="/vasarlas/admin" method="POST" enctype="multipart/form-data" style="margin: 0;">
+    {{ csrf.keys|raw }}
+            <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+            <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+            <input type="hidden" name="action" value="create_item">
+            
+            <div class="admin-form-group">
+                <label>Típus</label>
+                <select name="type" id="item_type" required>
+                    <option value="weapon">Fegyver</option>
+                    <option value="armor">Védelmi eszköz (Páncél)</option>
+                    <option value="consumable">Egyéb cucc (Drog/Buff/Konzumábilis)</option>
+                    <option value="jet">Magánrepülő</option>
+                </select>
+            </div>
+
+            <div class="admin-form-group">
+                <label>Tárgy neve</label>
+                <input type="text" name="name" required>
+            </div>
+
+            <div class="admin-form-group">
+                <label>Kép (Opcionális)</label>
+                <input type="file" name="image_file" accept="image/png, image/jpeg, image/gif">
+            </div>
+
+            <div class="admin-form-group">
+                <label>Ár ($)</label>
+                <input type="number" name="price" value="0" min="0" required>
+            </div>
+
+            <div class="admin-form-group">
+                <label>Kezdeti Készlet (db)</label>
+                <input type="number" name="stock" value="10" min="1" required>
+            </div>
+
+            <div id="stats_fields_atk" class="admin-form-group">
+                <label>Támadás pont</label>
+                <input type="number" name="attack" value="0">
+            </div>
+            
+            <div id="stats_fields_def" class="admin-form-group">
+                <label>Védelem pont</label>
+                <input type="number" name="defense" value="0">
+            </div>
+
+            <!-- Repülők -->
+            <div id="jet_fields" class="admin-form-group" style="display: none;">
+                <label>Utazás utáni várakozási idő (perc)</label>
+                <input type="number" name="travel_time" value="30" min="0">
+            </div>
+
+            <!-- Egyéb cuccok (Buffok) -->
+            <div id="consumable_fields" style="display: none;">
+                <div style="padding: 10px; background: #222; border-bottom: 1px solid #111;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #f39c12;">Dinamikus Hatás beállítása</h4>
+                    
+                    <div class="admin-form-group" style="border: none;">
+                        <label style="background: transparent;">Választható Hatás</label>
+                        <select name="effect_type">
+                            <option value="">Nincs hatás</option>
+                            <option value="cooldown_reduction">Harc: Várakozási idő csökkentés (%)</option>
+                            <option value="attack_bonus">Harc: Támadás bónusz (%)</option>
+                            <option value="defense_bonus">Harc: Védelem bónusz (%)</option>
+                            <option value="health_percent">Azonnali Élet Gyógyítás (%)</option>
+                            <option value="energy_percent">Azonnali Energia Visszatöltés (%)</option>
+                        </select>
+                    </div>
+                
+                    <div class="admin-form-group" style="border: none;">
+                        <label style="background: transparent;">Hatás ereje (Value)</label>
+                        <input type="number" name="effect_value" value="0">
+                    </div>
+
+                    <div class="admin-form-group" style="border: none;">
+                        <label style="background: transparent;">Időtartam (Perc)</label>
+                        <input type="number" name="effect_duration" value="0">
+                    </div>
+
+                    <div class="admin-form-group" style="border: none;">
+                        <label style="background: transparent;">Stackelhető?</label>
+                        <select name="stackable">
+                            <option value="1">Igen, több is lehet</option>
+                            <option value="0">Nem, csak 1x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-footer">
+                <a href="/vasarlas" style="color: #6a5acd; text-decoration: none; padding: 5px 10px; font-size: 13px; flex: 1;">Vissza a boltba</a>
+                <button type="submit" class="admin-btn" hx-disabled-elt="this">Tárgy Feltöltése</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('item_type').addEventListener('change', function() {
+        var type = this.value;
+        var statsAtk = document.getElementById('stats_fields_atk');
+        var statsDef = document.getElementById('stats_fields_def');
+        var consRow = document.getElementById('consumable_fields');
+        var jetRow = document.getElementById('jet_fields');
+
+        statsAtk.style.display = 'none';
+        statsDef.style.display = 'none';
+        consRow.style.display = 'none';
+        jetRow.style.display = 'none';
+
+        if (type === 'weapon' || type === 'armor') {
+            statsAtk.style.display = 'flex';
+            statsDef.style.display = 'flex';
+        } else if (type === 'consumable') {
+            consRow.style.display = 'block';
+        } else if (type === 'jet') {
+            jetRow.style.display = 'block';
+        }
+    });
+    // Trigger rajzolás inicializáláskor
+    document.getElementById('item_type').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}
+
+

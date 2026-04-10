@@ -1,0 +1,643 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block title %}Otthon{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    
+    {# TAB NAVIGATION #}
+    <div class="game-tab-nav">
+        <a href="/otthon?tab=otthon" hx-get="/otthon?tab=otthon" hx-target="#game-content" hx-push-url="true"
+           class="game-tab {% if active_tab == 'otthon' %}active{% endif %}">
+            Otthon
+        </a>
+        <a href="/otthon?tab=targyaid" hx-get="/otthon?tab=targyaid" hx-target="#game-content" hx-push-url="true"
+           class="game-tab {% if active_tab == 'targyaid' %}active{% endif %}">
+            Tárgyaid
+        </a>
+        <a href="/otthon?tab=ingatlanok" hx-get="/otthon?tab=ingatlanok" hx-target="#game-content" hx-push-url="true"
+           class="game-tab {% if active_tab == 'ingatlanok' %}active{% endif %}">
+            Ingatlanok
+        </a>
+    </div>
+    
+    {# Flash üzenetek a base_game.twig-ben, a #flash-container-ben jelennek meg globálisan #}
+
+    {# CONTENT TABS #}
+    {% if active_tab == 'targyaid' %}
+        
+        {# 1. FELSZERELT #}
+        <div class="section-header">Nálad lévő fegyver + védelmek</div>
+        <table class="pixel-perfect-table">
+            <thead>
+                <tr>
+                    <th width="40%">Típus <span class="sort-icon">♦</span></th>
+                    <th width="20%">Támadás <span class="sort-icon">♦</span></th>
+                    <th width="20%">Védelem</th>
+                    <th width="20%">Elrakás <span class="sort-icon">♦</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if equipped_items is defined and equipped_items|length > 0 %}
+                    {% for item in equipped_items %}
+                    <tr>
+                        <td class="font-bold italic">{{ item.name }}{% if item.type == 'weapon' %} (F){% endif %}</td>
+                        <td>{{ item.attack }}</td>
+                        <td>{{ item.defense }}</td>
+                        <td>
+                            <form action="/targy/levesz" method="POST" style="display: inline;" hx-disabled-elt="a.action-link">
+                                {{ csrf.keys|raw }}
+                                <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                <a href="#" hx-on:click="this.closest('form').submit();" class="action-link">Elteszem</a>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="4" class="empty-cell">Nincs felszerelt tárgyad</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+        
+        <div class="spacer"></div>
+
+        {# 1.5. TÁROLT FEGYVEREK #}
+        <div class="section-header">Tárolt fegyvereid</div>
+        <table class="pixel-perfect-table item-table">
+            <thead>
+                <tr>
+                    <th width="40%">Típus <span class="sort-icon">♦</span></th>
+                    <th width="20%">Darab <span class="sort-icon">♦</span></th>
+                    <th width="20%">Támadás <span class="sort-icon">♦</span></th>
+                    <th width="20%">Védelem <span class="sort-icon">♦</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stored_weapons is defined and stored_weapons|length > 0 %}
+                    {% for item in stored_weapons %}
+                    <tr class="item-row">
+                        <td class="font-bold italic">{{ item.name }}</td>
+                        <td>{{ item.quantity }} db</td>
+                        <td>{{ item.attack }}</td>
+                        <td>{{ item.defense }}</td>
+                    </tr>
+                    <tr class="action-row">
+                        <td colspan="4">
+                            <div class="action-container">
+                                <div class="action-line">
+                                    <span class="action-label">Tevékenységek:</span>
+                                    <form action="/targy/felszerel" method="POST" style="display: inline;" hx-disabled-elt="button[type='submit']">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <button type="submit" class="btn-action">Magamhoz veszek egyet</button>
+                                    </form>
+                                </div>
+                                <div class="action-line">
+                                    <span class="action-label" style="visibility: hidden;">Tevékenységek:</span> {# Spacer alignment #}
+                                    <form action="/targy/elad" method="POST" style="display: inline;" hx-disabled-elt="button[type='submit']">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <span class="sell-label">Gyors eladás:</span>
+                                        <select name="quantity" class="sell-select">
+                                            {% for i in 1..item.quantity %}
+                                            <option value="{{ i }}">{{ i }} db (+${{ (item.price * i)|number_format(0, ',', ',') }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn-action">Mehet</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="4" class="empty-cell">Nincs tárolt fegyvered</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="spacer"></div>
+
+        {# 2. TÁROLT VÉDELMEK #}
+        <div class="section-header">Tárolt védelmi eszközeid</div>
+        <table class="pixel-perfect-table item-table">
+            <thead>
+                <tr>
+                    <th width="40%">Típus <span class="sort-icon">♦</span></th>
+                    <th width="20%">Darab <span class="sort-icon">♦</span></th>
+                    <th width="20%">Támadás <span class="sort-icon">♦</span></th>
+                    <th width="20%">Védelem <span class="sort-icon">♦</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stored_armor is defined and stored_armor|length > 0 %}
+                    {% for item in stored_armor %}
+                    <tr class="item-row">
+                        <td class="font-bold italic">{{ item.name }}</td>
+                        <td>{{ item.quantity }} db</td>
+                        <td>{{ item.attack }}</td>
+                        <td>{{ item.defense }}</td>
+                    </tr>
+                    <tr class="action-row">
+                        <td colspan="4">
+                            <div class="action-container">
+                                <div class="action-line">
+                                    <span class="action-label">Tevékenységek:</span>
+                                    <form action="/targy/felszerel" method="POST" style="display: inline;">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <button type="submit" class="btn-action">Magamhoz veszek egyet</button>
+                                    </form>
+                                </div>
+                                <div class="action-line">
+                                    <span class="action-label" style="visibility: hidden;">Tevékenységek:</span> {# Spacer alignment #}
+                                    <form action="/targy/elad" method="POST" style="display: inline;">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <span class="sell-label">Gyors eladás:</span>
+                                        <select name="quantity" class="sell-select">
+                                            {% for i in 1..item.quantity %}
+                                            <option value="{{ i }}">{{ i }} db (+${{ (item.price * i)|number_format(0, ',', ',') }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn-action">Mehet</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="4" class="empty-cell">Nincs tárolt védelmi eszközöd</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="spacer"></div>
+
+        {# 3. TÁROLT FOGYASZTHATÓ #}
+        <div class="section-header">Tárolt elfogyasztható cuccaid</div>
+        <table class="pixel-perfect-table item-table">
+            <thead>
+                <tr>
+                    <th width="40%">Cucc <span class="sort-icon">♦</span></th>
+                    <th width="20%">Darab <span class="sort-icon">♦</span></th>
+                    <th width="40%">Hatása</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stored_consumables is defined and stored_consumables|length > 0 %}
+                    {% for item in stored_consumables %}
+                    <tr class="item-row">
+                        <td class="font-bold italic">{{ item.name }}</td>
+                        <td>{{ item.quantity }} db</td>
+                        <td>{{ item.description|default('-') }}</td>
+                    </tr>
+                    <tr class="action-row">
+                        <td colspan="3">
+                             <div class="action-container">
+                                <div class="action-line">
+                                    <span class="action-label">Tevékenységek:</span>
+                                    <form action="/targy/hasznal" method="POST" style="display: inline;">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <button type="submit" class="btn-action">Elfogyasztok 1 darabot</button>
+                                    </form>
+                                </div>
+                                <div class="action-line">
+                                    <span class="action-label" style="visibility: hidden;">Tevékenységek:</span>
+                                    <form action="/targy/elad" method="POST" style="display: inline;">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <span class="sell-label">Gyors eladás:</span>
+                                        <select name="quantity" class="sell-select">
+                                            {% for i in 1..item.quantity %}
+                                            <option value="{{ i }}">{{ i }} db (+${{ (item.price * i)|number_format(0, ',', ',') }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn-action">Mehet</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="3" class="empty-cell">Nincs tárolt fogyasztható tárgyad</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="spacer"></div>
+
+        {# 4. TÁROLT EGYÉB #}
+        <div class="section-header">Tárolt egyéb cuccaid</div>
+        <table class="pixel-perfect-table item-table">
+            <thead>
+                <tr>
+                    <th width="40%">Cucc <span class="sort-icon">♦</span></th>
+                    <th width="20%">Darab <span class="sort-icon">♦</span></th>
+                    <th width="40%">Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stored_misc is defined and stored_misc|length > 0 %}
+                    {% for item in stored_misc %}
+                    <tr class="item-row">
+                        <td class="font-bold italic">{{ item.name }}</td>
+                        <td>{{ item.quantity }} db</td>
+                        <td>{{ item.description|default('-') }}</td>
+                    </tr>
+                    <tr class="action-row">
+                        <td colspan="3">
+                            <div class="action-container">
+                                <div class="action-line">
+                                    <form action="/targy/elad" method="POST" style="display: inline;">
+                                        {{ csrf.keys|raw }}
+                                        <input type="hidden" name="user_item_id" value="{{ item.id }}">
+                                        <span class="sell-label">Gyors eladás:</span>
+                                        <select name="quantity" class="sell-select">
+                                            {% for i in 1..item.quantity %}
+                                            <option value="{{ i }}">{{ i }} db (+${{ (item.price * i)|number_format(0, ',', ',') }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn-action">Mehet</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="3" class="empty-cell">Nincs egyéb tárgyad</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+    {% elseif active_tab == 'ingatlanok' %}
+    
+         <div class="section-header">Ingatlanvásárlás (Jelenleg {{ available_properties|length }} különböző ingatlan)</div>
+         <table class="pixel-perfect-table item-table">
+            <thead>
+                <tr>
+                    <th width="20%">Lakás <span class="sort-icon">♦</span></th>
+                    <th width="15%">Ország <span class="sort-icon">♦</span></th>
+                    <th width="20%">Garázs <span class="sort-icon">♦</span></th>
+                    <th width="20%">Alvás <span class="sort-icon">♦</span></th>
+                    <th width="10%">Szabad <span class="sort-icon">♦</span></th>
+                    <th width="15%">Ár <span class="sort-icon">♦</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for property in available_properties %}
+                <tr class="item-row">
+                    <td class="font-bold">{{ property.name }}</td>
+                    <td>{{ property.country_restriction|default('Bárhol') }}</td>
+                    <td>
+                        {% if property.garage_capacity > 0 %}
+                            {{ property.garage_capacity }} férőhelyes
+                        {% else %}
+                            Nincs
+                        {% endif %}
+                    </td>
+                    <td>
+                        +{{ property.sleep_health_regen_percent }}% élet/óra<br>
+                        +{{ property.sleep_energy_regen_percent }}% energia/óra
+                    </td>
+                    <td>
+                        {% if property.country_restriction is null %}Korlátlan
+                        {% elseif property.country_restriction == user_country %}Igen
+                        {% else %}Nem{% endif %}
+                    </td>
+                    <td>${{ property.price|number_format(0, ',', ',') }}</td>
+                </tr>
+                <tr class="action-row">
+                    <td colspan="6" style="text-align: center; padding: 15px; background: #fff; border-top: 1px solid #ccc;">
+                        <div class="mb-10">
+                            {% if property.image_path %}
+                                <img src="/{{ property.image_path }}" alt="{{ property.name }}" style="max-width: 400px; border: 1px solid #000;">
+                            {% else %}
+                                <div style="width: 400px; height: 200px; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto; border: 1px solid #000;">
+                                    Kép hamarosan
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <form action="/otthon/ingatlan/vasarlas" method="POST" hx-disabled-elt="button[type='submit']">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="property_id" value="{{ property.id }}">
+                            <button type="submit" class="btn-action" style="font-size: 13px; padding: 3px 20px; font-weight: bold;">Megveszem</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+         </table>
+         
+         <div style="text-align: center; margin: 10px 0; color: #333; font-size: 11px;">
+             (Az ingatlan garázs mérete hozzáadódik a jelenlegi garázsod méretéhez.)
+         </div>
+         
+         <div class="spacer"></div>
+         
+         <div class="section-header">Ingatlanjaid</div>
+         {% if user_properties is empty %}
+            <div style="padding: 10px; text-align: center; color: #666; background: #e4e4e4; border: 1px solid #777;">Még nincs ingatlanod.</div>
+         {% else %}
+             <table class="pixel-perfect-table">
+                <thead>
+                    <tr>
+                        <th width="20%">Lakás <span class="sort-icon">♦</span></th>
+                        <th width="20%">Kép</th>
+                        <th width="25%">Garázs, Alvás</th>
+                        <th width="15%">Ország <span class="sort-icon">♦</span></th>
+                        <th width="20%">Eladás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for up in user_properties %}
+                    <tr style="background-color: #e4e4e4;">
+                        <td class="font-bold">{{ up.name }}</td>
+                        <td class="text-center">
+                             {% if up.image_path %}
+                                <img src="/{{ up.image_path }}" alt="{{ up.name }}" style="width: 100px; border: 1px solid #000;">
+                            {% else %}
+                                <div style="width: 100px; height: 60px; background: #777; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto; border: 1px solid #000; font-size: 10px;">
+                                    Nincs kép
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if up.garage_capacity > 0 %}
+                                {{ up.garage_capacity }} férőhelyes
+                            {% else %}
+                                Nincs garázs
+                            {% endif %}
+                            <br>
+                            +{{ up.sleep_health_regen_percent }}% élet/óra<br>
+                            +{{ up.sleep_energy_regen_percent }}% energia/óra
+                        </td>
+                        <td>{{ up.country_code }}</td>
+                        <td>
+                            <form action="/otthon/ingatlan/eladas" method="POST">
+                                {{ csrf.keys|raw }}
+                                <input type="hidden" name="user_property_id" value="{{ up.id }}">
+                                <button type="submit" class="btn-action" style="margin-bottom: 2px;" hx-disabled-elt="this">Elad</button>
+                                <div style="font-size: 11px;">(${{ (up.purchase_price * 0.6)|number_format(0, ',', ',') }})</div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+             </table>
+         {% endif %}
+
+    {% elseif active_tab == 'otthon' %}
+    
+        <h2 style="text-align: center; margin: 20px 0;">Üdvözöllek az Otthonodban</h2>
+        
+        <div style="max-width: 600px; margin: 0 auto;">
+            {% if not sleep_status and not has_property_in_country %}
+                <div style="text-align: center; font-weight: bold; margin-bottom: 15px; font-size: 13px;">
+                    Jelenleg nincs ingatlanod ebben az országban, ezért csak az utcán aludhatsz, ahol támadható leszel.<br>
+                    Vásárolj ingatlant, ahol alvás közben nem leszel támadható.
+                </div>
+            {% endif %}
+            
+            <div style="border: 1px solid #000;">
+                <div class="section-header" style="font-size: 16px; padding: 10px;">Alvás</div>
+                <div style="background: #e4e4e4; padding: 15px; font-size: 13px; line-height: 1.5;">
+                    {% if sleep_status %}
+                        {# SLEEPING STATE #}
+                        <p style="margin: 0 0 10px 0;">
+                            Otthonodban való lefekvéskor a Küzdelmek opció alól nem leszel támadható.<br>
+                            Alvás közben minden egész óra után az életed {{ property_regen.health_regen_percent|default(2) }}, 
+                            az energiád {{ property_regen.energy_regen_percent|default(3) }} százalékot töltődik.
+                        </p>
+                        
+                        <p style="margin: 15px 0 5px 0;">
+                            Hátralévő idő: <span id="sleep-timer" data-end-time="{{ sleep_status.sleep_end_at }}" style="font-weight: bold;">
+                                Számítás...
+                            </span>
+                        </p>
+                        
+                        <form action="/otthon/alvas/felkeles" method="POST" style="margin: 0;" hx-disabled-elt="button">
+                            {{ csrf.keys|raw }}
+                            <button type="submit" style="background: none; border: none; padding: 0; color: #000; text-decoration: underline; cursor: pointer; font-size: 13px; font-family: inherit;">
+                                Kattints ide a felkeléshez (Eddig {{ sleep_status.hours_elapsed }} órát aludtál)
+                            </button>
+                        </form>
+                        
+                    {% else %}
+                        {# AWAKE STATE #}
+                        <p style="margin: 0 0 15px 0;">
+                            Alvás közben minden egész óra után az életed {{ has_property_in_country ? property_regen.health_regen_percent : 2 }}, 
+                            az energiád {{ has_property_in_country ? property_regen.energy_regen_percent : 3 }} százalékot töltődik.
+                        </p>
+                        
+                        <form action="/otthon/alvas/lefekes" method="POST" style="margin: 0; display: flex; align-items: center; gap: 10px;" hx-disabled-elt="button[type='submit']">
+                            {{ csrf.keys|raw }}
+                            <span>Hány órára pihensz le?</span>
+                            <select name="hours" style="padding: 2px;">
+                                {% for h in 1..9 %}
+                                <option value="{{ h }}">{{ h }} óra</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-action" style="padding: 2px 10px; font-weight: bold; font-size: 13px;">Mehet</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+    
+    {# SHARED SCRIPTS FOR ALL TABS #}
+    <script>
+        // Toggle action rows logic
+        function initToggleRows() {
+            document.querySelectorAll('.item-row').forEach(row => {
+                // Remove old listener to avoid duplicates if HTMX re-evaluates
+                // But simplified: just ensure we attach to new elements.
+                // For safety with HTMX, we can rely on this script running when content is swapped.
+                
+                // Clone node to strip events if necessary, OR just simple implementation:
+                row.onclick = function() {
+                    const nextRow = this.nextElementSibling;
+                    if (nextRow && nextRow.classList.contains('action-row')) {
+                        // Toggle display
+                        if (nextRow.style.display === 'table-row') {
+                            nextRow.style.display = 'none';
+                            this.classList.remove('row-active');
+                        } else {
+                            // Optional: Close others
+                            // document.querySelectorAll('.action-row').forEach(r => r.style.display = 'none');
+                            // document.querySelectorAll('.item-row').forEach(r => r.classList.remove('row-active'));
+                            
+                            nextRow.style.display = 'table-row';
+                            this.classList.add('row-active');
+                        }
+                    }
+                };
+            });
+        }
+        
+        // Run immediately
+        initToggleRows();
+        
+        // Also listen for HTMX swaps if needed, but since this script is inside the swapped content,
+        // it should run every time the content is updated.
+    </script>
+</div>
+
+<style>
+/* PIXEL PERFECT STYLES */
+.home-container {
+    background: #efefef; /* Light grey bg from image */
+    padding: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+}
+
+/* TABS — now using global .game-tab from style.css */
+
+/* HEADERS */
+.section-header {
+    background: linear-gradient(to bottom, #444444 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #111;
+    font-weight: normal;
+    font-size: 13px;
+    margin-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    text-shadow: 1px 1px 1px #000;
+}
+
+/* TABLES */
+.pixel-perfect-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-bottom: 0;
+    border-left: 1px solid #555;
+    border-right: 1px solid #555;
+    border-bottom: 1px solid #555;
+}
+
+.pixel-perfect-table th {
+    background: #f0f0f0; 
+    border: 1px solid #777; 
+    padding: 3px 5px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 11px;
+    color: #000;
+}
+
+.pixel-perfect-table td {
+    border: 1px solid #777;
+    padding: 3px 5px;
+    font-size: 12px;
+    color: #000;
+    vertical-align: middle;
+}
+
+/* Zebra striping - based on image visual */
+.item-row {
+    background-color: #e4e4e4;
+    border-bottom: 1px solid #777;
+    cursor: pointer;
+}
+
+.pixel-perfect-table tbody tr:hover td {
+    background-color: #d0d0d0;
+}
+
+.font-bold { font-weight: bold; }
+.italic { font-style: italic; }
+.sort-icon { float: right; font-size: 9px; cursor: pointer; color: #333; margin-top: 2px; }
+
+/* ACTION AREA Styling */
+.action-row {
+    display: none;
+    background-color: #e4e4e4; 
+}
+.action-row td {
+    border-top: none; /* Merge with item row */
+    padding-top: 0;
+}
+
+.action-container {
+    padding: 5px;
+    background: #e4e4e4; 
+    /* border-top: 1px solid #ccc; */
+}
+
+.action-line {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-label {
+    font-size: 11px;
+    color: #333;
+    width: 90px;
+    text-align: right;
+    margin-right: 5px;
+}
+
+.sell-label {
+    font-size: 11px;
+    color: #333;
+}
+
+.sell-select {
+    padding: 1px;
+    font-size: 11px;
+    border: 1px solid #777;
+}
+
+.btn-action {
+    background: white; /* Standard button bg */
+    border: 1px solid #777;
+    border-radius: 2px;
+    color: #000;
+    padding: 1px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    text-decoration: none;
+}
+
+.btn-action:hover {
+    background: #e0e0e0;
+    border-color: #000;
+}
+
+.action-link {
+    text-decoration: underline;
+    color: #000;
+    font-size: 12px;
+}
+
+/* SPACER */
+.spacer {
+    height: 15px;
+}
+
+.empty-cell {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 10px !important;
+}
+
+/* Flash messages: .alert-success / .alert-error (global style.css) */
+
+</style>
+{% endblock %}

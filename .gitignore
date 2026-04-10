@@ -1,0 +1,72 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment and sensitive data
+.env
+.env.backup
+.env.local
+.htaccess.backup
+
+# IDEs and System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
+
+# Backups and large archives
+*.zip
+*.tar
+*.gz
+*.rar
+Netmafia_Backup.zip
+
+# Logs and debug files
+*.log
+debug_*.php
+test_*.php
+tmp_*.php
+scratch/
+var/cache/
+var/logs/
+
+# Audit and Static Analysis reports
+audit_report.html
+audit_*.txt
+phpstan-*.txt
+phpstan-report.json
+phpstan-output.txt
+tmp_audit.md
+tmp_audit_script.php
+
+# Documentation/Metadata exports (generated)
+projekt_strukturam.txt
+structure.txt
+db_tables.json
+db_triggers.json
+db_usage.json
+audit_direct_update.txt
+audit_mt_rand.txt
+audit_silent_cast.txt
+
+# Local tools/scripts that are not part of the application
+fix_*.py
+write_*.py
+add_cars.php
+db_alter.php
+db_alter_weed.php
+list_tables.php
+print_phpstan.php
+security_audit.php
+security_audit2.php
+test_*.php
+
+# PHPUnit
+.phpunit.cache/
+
+# Misc
+.agent/
+.gemini/
+.agent_knowledge/

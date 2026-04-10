@@ -1,0 +1,1480 @@
+/* --- MOCKUP STYLE.CSS --- */
+
+/* =============================================
+   DESIGN TOKENS — minden méret és szín itt él!
+   Ha valamit változtatni kell, CSAK IDE nyúlj!
+   ============================================= */
+:root {
+    /* === LAYOUT MÉRETEK === */
+    --sidebar-width: 182px;        /* 5cm oldalsáv */
+    --content-width: 584px;        /* 16cm középső tartalom */
+    --layout-min-height: 774px;    /* 21cm minimum magasság */
+
+    /* === MODUL DOBOZ MÉRETEK === */
+    --mod-box-width: 418px;        /* 11.45cm moduldoboz szélesség */
+    --ecrime-top-height: 354px;    /* 9.6cm felső e-bűnözés doboz */
+    --ecrime-bottom-height: 199px; /* 5.4cm alsó e-bűnözés doboz */
+    --ecrime-box-gap: 15px;        /* 0.4cm hézag a két doboz között */
+
+    /* === SZÍN TOKENEK === */
+    --color-alert: #ff4444;        /* Értesítő badge, combat badge szín */
+    --color-admin-link: #ffcc00;   /* Admin menüpont arany szín */
+    --color-mod-text: #a55a28;     /* Modul leíró szöveg barnás szín */
+    --color-cooldown-icon: #aaa;   /* Várakozási idő SVG ikon szín */
+}
+
+
+/* Alap beállítások (a projekt style.css-éből) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    overflow-y: scroll;
+    /* Mindig mutatja a görgetősáv helyét */
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 12px;
+    color: #333;
+    background: radial-gradient(circle, #d0d0d0 0%, #999999 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+body.game-body {
+    background-color: #0d0d0d;
+    background-image:
+        /* 1. Fekete mozi-vignetta: a képernyő sarkai felé besötétedik, a fókusz középre megy */
+        radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.85) 100%),
+        /* 2. KÖZÉPSŐ VILÁGÍTÓ SÁV: széles hatókörű fény középre */
+        linear-gradient(to right, transparent 10%, rgba(255,255,255,0.15) 50%, transparent 90%),
+        /* 3. Fizikai panel hatás: felül kap egy hajszálvékony fényt, aztán lefelé árnyékosodik */
+        linear-gradient(to bottom, rgba(255,255,255,0.03) 0%, transparent 15%, rgba(0,0,0,0.4) 100%),
+        /* 4. A TISZTA luxus mintád, láthatatlan illesztésekkel ismételve (nincs nagyítva) */
+        url('/images/bg_pattern.jpg');
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 870px;
+    background-position: center, center, center, top left;
+    background-attachment: fixed;
+    display: block;
+    padding-top: 15px;
+    color: #ccc;
+}
+
+/* --- FŐ TÁROLÓ --- */
+.fokontener {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+.login-doboz {
+    background-color: #fff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid #b0b0b0;
+    margin-bottom: 10px;
+}
+
+.doboz-fejlec {
+    background-color: #333;
+    color: #fff;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+    border-bottom: 3px solid #555;
+}
+
+.doboz-tartalom {
+    padding: 20px;
+}
+
+.bevezeto-szoveg {
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: #666;
+}
+
+.bevezeto-szoveg span {
+    color: #d9534f;
+    font-weight: bold;
+}
+
+/* --- ŰRLAPOK --- */
+.urlap-sor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.urlap-sor label {
+    width: 120px;
+    text-align: right;
+    margin-right: 10px;
+    font-weight: bold;
+    color: #555;
+}
+
+.urlap-sor input,
+.urlap-sor select {
+    width: 200px;
+    padding: 3px;
+    border: 1px solid #999;
+    background-color: #eef3ff;
+}
+
+.gomb-tarolo {
+    text-align: center;
+    margin-top: 15px;
+}
+
+button {
+    background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
+    border: 1px solid #999;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+}
+
+button:hover {
+    background: #e0e0e0;
+}
+
+/* --- GAME UI SPECIFIC (jatek.php-ból) --- */
+.wrapper {
+    width: 948px; /* Kalibrált 26cm a monitorhoz */
+    margin: 0 auto;
+    padding-bottom: 20px;
+}
+
+.header-area {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    height: 55px; /* Kalibrált 1.5cm */
+    align-items: flex-end;
+}
+
+.top-bar {
+    width: 456px; /* Kalibrált 12.5cm */
+    height: 55px;
+    box-sizing: border-box;
+    margin-right: 0;
+    background: linear-gradient(to bottom, #303030 0%, #151515 100%);
+    border: 1px solid rgb(51, 51, 51);
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Compact Stats Table */
+.stats-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.stats-table th {
+    color: #888;
+    font-size: 9px;
+    font-family: Arial, sans-serif;
+    text-transform: uppercase;
+    padding: 0 4px 2px 4px;
+    text-align: center;
+    font-weight: normal;
+    border-bottom: none;
+    letter-spacing: 0.5px;
+}
+
+.stats-table td {
+    color: #ddd;
+    font-size: 11px;
+    font-family: Verdana, sans-serif;
+    font-weight: normal;
+    padding: 0 4px 0 4px;
+    text-align: center;
+    border-top: none;
+    text-shadow: 1px 1px 0 #000;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    border-radius: 6px;
+}
+/* Money decrease flash effect */
+.stat-flash {
+    animation: flashRed 4s linear forwards;
+    border-radius: 6px;
+}
+
+@keyframes flashRed {
+    0% {
+        background-color: rgba(160, 0, 0, 0.8);
+        color: #ff5555;
+        text-shadow: none;
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+    100% {
+        background-color: rgba(160, 0, 0, 0);
+        color: #ddd;
+        text-shadow: 1px 1px 0 #000;
+        box-shadow: none;
+    }
+}
+
+/* Money increase flash effect */
+.stat-flash-green {
+    animation: flashGreen 4s linear forwards;
+    border-radius: 6px;
+}
+
+@keyframes flashGreen {
+    0% {
+        background-color: rgba(0, 160, 0, 0.8);
+        color: #55ff55;
+        text-shadow: none;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+    100% {
+        background-color: rgba(0, 160, 0, 0);
+        color: #ddd;
+        text-shadow: 1px 1px 0 #000;
+        box-shadow: none;
+    }
+}
+
+.header-bar {
+    background: linear-gradient(to bottom, #3a3a3a 0%, #222 50%, #111 51%, #1a1a1a 100%);
+    border: 1px solid #444;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    margin-bottom: 5px;
+}
+
+.header-bar .game-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffcc00;
+}
+
+.header-bar .user-info {
+    font-size: 12px;
+    color: #999;
+}
+
+.stats-bar {
+    background: linear-gradient(to bottom, #2a2a2a 0%, #151515 50%, #050505 51%, #1a1a1a 100%);
+    border: 1px solid #333;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 8px;
+}
+
+.stat-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: #777;
+    margin-bottom: 2px;
+}
+
+.stat-value {
+    font-size: 11px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.main-layout {
+    display: flex;
+    align-items: stretch;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+    border-radius: 6px;
+}
+
+/* --- GOLDEN STANDARD MODULE UI (User Mockup) --- */
+
+/* Felső menüsor (tab-ok) tárolója - Integrált Golden Standard */
+.mod-top-menu {
+    width: 299px; /* Egzakt 8.2 cm (Szélesség tartva) */
+    height: 26px; /* Egzakt 0.7 cm (Magasság tartva) */
+    margin: 18px auto 15px auto; 
+    display: flex;
+    justify-content: center; /* Ha esetleg kisebb a tartalom, középre húz */
+    text-align: center;
+}
+
+/* Maguk a tab-ok dizájnja - Átvett stílusokkal ötvözve */
+.mod-top-menu-item {
+    flex: 1 1 0px;
+    background-color: #404040; /* Sötétszürke háttér */
+    color: #e2e2e2; /* Még 20%-kal világosabb (majdnem fehér tiszta szürke) */
+    line-height: 24px; /* 26px - 2px keret a tökéletes függőleges középponthoz */
+    text-align: center;
+    text-decoration: none; /* Aláhúzás eltávolítása */
+    font-size: 11px; /* Emelve 10%-ot kérésre (10px-ről 11px-re) */
+    font-family: Verdana, sans-serif; /* Lecserélve Verdanára! */
+    border: 1px solid #222222; /* Fekete keret */
+    margin-right: -1px; /* Ez a trükk húzza őket egymásra, hogy a keret egybeérjen */
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative; /* Z-index trükk a margin-overlap hover kiemeléshez */
+}
+
+.mod-top-menu-item:last-child {
+    margin-right: 0;
+}
+
+/* Amikor ráviszed az egeret (Hover effekt) */
+.mod-top-menu-item:hover {
+    background-color: #555555; /* Csak a háttér világosodik */
+    /* A szín marad fix halvány szürke! */
+    z-index: 2; /* A hover keretek ráfedjenek a szomszédokra */
+}
+
+
+/* Fő tartalom dobozok */
+
+/* Verdana tipográfia a Golden Standard modulon belül.
+   Az !important már nem kell, mert a body szintén Verdanát használ! */
+.mod-top-menu-item,
+.mod-content-box {
+    font-family: Verdana, sans-serif;
+}
+
+.mod-content-box {
+    width: var(--mod-box-width);
+    margin: 0 auto var(--ecrime-box-gap) auto; /* 0.4cm hézag a dobozok között */
+    background-color: #f4f4f4;
+    border: 1px solid #111111;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ha form van a dobozban, annak 100%-osan ki kell töltenie a fennmaradó "flex" teret */
+.mod-content-box form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dobozok fejléc sávja */
+.mod-box-header {
+    background-color: #3b3b3b;
+    color: #e0e0e0;
+    text-align: center;
+    padding: 4px; /* Brutálisan összenyomott fejléc padding */
+    font-size: 14px; /* Picit kisebb betű a jobb arányért */
+    border-bottom: 1px solid #111;
+}
+
+/* Kép tároló */
+.mod-box-image {
+    width: 100%;
+    border-bottom: 1px solid #111;
+    background-color: #000;
+}
+
+.mod-box-image img {
+    width: 100%;
+    height: 201px; /* Matematikailag pontos 5.45 cm magasság! */
+    object-fit: cover;
+    display: block; 
+}
+
+/* Szöveges tartalom */
+.mod-box-text {
+    flex: 1; /* Szippantsa fel a megmaradó teret a kép alatt */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Garantálja, hogy a fennmaradó "levegő" pixelpontosan azonos legyen felül és alul! */
+    padding: 3px 10px; /* Alap keret */
+    line-height: 1.15; /* Extrém szűk sorköz, hogy 9 sor beférjen! */
+    color: #a55a28; /* Halványbarna/rézszínű elvárt betűszín a képről */
+    font-size: 10px; /* Picit tovább kicsinyítve (11-ről 10-re) a matematikai túlcsordulás miatt */
+    text-align: left;
+}
+
+.mod-box-text p {
+    margin-top: 0;
+    margin-bottom: 3px; /* A bekezdések is alig állnak el egymástól! */
+}
+
+.mod-box-text p:last-child {
+    margin-bottom: 0;
+}
+
+/* Táblázat a módszereknek */
+table.mod-action-table {
+    width: 100%;
+    height: 100%; /* Kitölteti a táblázattal a fennmaradó fix üres teret az 5.4cm kiküszöbölésére */
+    border-collapse: collapse;
+    background-color: #f4f4f4;
+}
+
+.mod-action-table th, .mod-action-table td {
+    border: 1px solid #000; /* Visszaállunk az aranyközép 1px-re, mivel a dupla hiba megszűnt */
+    padding: 3px 8px; /* Brutálisan tömörített Cella Padding, hogy ne nyúljon ki 15.4cm-ből! */
+    text-align: left;
+}
+
+/* FANTOM DUPLA-KERETEK KIIRTÁSA: 
+   A táblázat külső peremén lévő vonalakat eltávolítjuk, 
+   hogy ne adódjanak össze a mod-content doboz saját fekete keretével! */
+.mod-action-table th:first-child, 
+.mod-action-table td:first-child {
+    border-left: none;
+}
+
+.mod-action-table th:last-child, 
+.mod-action-table td:last-child {
+    border-right: none;
+}
+
+/* Felső dupla vonal kiirtása (a Box Header már ad egyet felülről) */
+.mod-action-table thead th {
+    border-top: none;
+}
+
+/* Alsó dupla vonal kiirtása (Amikor a táblázat leér a doboz aljára) */
+.mod-action-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Fejléc oszlopok a táblázatban */
+.mod-action-table th {
+    font-weight: bold;
+    color: #000;
+    background-color: #ffffff;
+}
+
+/* =============================================
+   UTILITY OSZTÁLYOK — inline style kiváltók
+   ============================================= */
+
+/* Badge-ek (értesítés, harc, kocsma jelzők) */
+.menu-badge {
+    color: var(--color-alert);
+    font-weight: bold;
+    margin-left: 3px;
+}
+
+/* Admin menüpont arany link */
+.menu-link--admin {
+    color: var(--color-admin-link);
+}
+
+/* Cooldown SVG ikon (óra) a menüpontok mellett */
+.menu-cooldown-icon {
+    width: 14px;
+    height: 14px;
+    fill: var(--color-cooldown-icon);
+}
+
+/* Általános elrejtő utility */
+.hidden {
+    display: none;
+}
+
+/* Esély oszlop középre / fix méretre igazítása */
+.mod-action-table th.chance-col, 
+.mod-action-table td.chance-col {
+    width: 50px;
+    text-align: center;
+}
+
+/* Radio gombok melletti szöveg elrendezése */
+.mod-action-table label {
+    display: flex;
+    align-items: center; 
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 12px; /* Kicsit kisebb szöveg, hogy biztos beférjen egy sorba */
+    margin: 0;
+}
+
+.mod-action-table input[type="radio"] {
+    margin-right: 6px;
+    cursor: pointer;
+    transform: scale(1.1); /* Kevésbé nagyított radio gomb */
+}
+
+.mod-action-table i {
+    color: #555; 
+}
+
+/* Gomb sor a táblázat alján */
+.mod-button-row td {
+    text-align: center;
+    background-color: #f4f4f4;
+    padding: 4px; /* Tömör gomb tartó terület */
+}
+
+/* Elkövetés gomb dizájn */
+.mod-submit-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #666;
+    color: #000;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-family: Verdana, sans-serif; /* Erőltetett Verdana a gombokra is */
+    cursor: pointer;
+}
+
+.mod-submit-btn:hover {
+    background-color: #e5e5e5;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: var(--layout-min-height);
+    height: auto; /* Alkalmazkodik a tartalomhoz */
+    flex-shrink: 0;
+    background-color: rgb(29, 29, 29);
+    border: 1px solid rgb(51, 51, 51); /* Egységes keretszín a menünek */
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Eltávolítva, hogy a fejléc kifusson a széléig */
+    /* overflow: hidden; -- Nem rakjuk rá, mert a sticky sidebar-inner-nek kell a láthatóság */
+    position: relative;
+    z-index: 100; /* Fontos: megvédi a kilógó tooltipet az alácsúszástól (Pl. Utazás panel) */
+}
+
+/* Belső burkolat, ami a helyén tartja a gombokat miközben a fekete háttér nyúlik lefelé! */
+.sidebar-inner {
+    position: sticky;
+    top: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Kockásítás az ütközési pontokon */
+.main-layout > .sidebar:first-child {
+    border-top-left-radius: 4px; /* Még kisebb kerekítés */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.main-layout > .sidebar:last-child {
+    border-top-right-radius: 4px; /* Még kisebb kerekítés */
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* A legfelső fejléc beolvasztása a kerekítésbe */
+.main-layout > .sidebar:first-child .menu-header:first-of-type {
+    border-top-left-radius: 3px;
+    border-top: none;
+}
+
+.main-layout > .sidebar:last-child .menu-header:first-of-type {
+    border-top-right-radius: 3px;
+    border-top: none;
+}
+
+.content {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: var(--content-width);
+    min-height: var(--layout-min-height);
+    height: auto;
+    background-color: #e6e6e6;
+    color: #222;
+    padding: 10px;
+    border-radius: 0; /* Teljesen egyenes a szépséges illeszkedésért */
+    border: 1px solid #444;
+    border-left: none; /* Eltüntetjük a dupla keret miatt */
+    border-right: none;
+    margin: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: visible; /* Nincs belső doboz scroll! Helyette oldalgörgetés van! */
+}
+
+/* === A FŐMENÜ FEJLÉC — FINOMÍTOTT TEXTÚRÁLT VÁLTOZAT === */
+/* === A FŐMENÜ FEJLÉC — LAPÍTOTT MODERNEBB VÁLTOZAT === */
+.menu-header {
+    height: 29px; 
+    line-height: 29px; 
+    font-size: 15px; 
+    font-weight: 900;
+    color: #d0d0d0; 
+    padding: 0 15px 0 13px; /* Behúzva 13px-re, hogy egy síkban legyen a golyókkal */
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.6); 
+    text-transform: uppercase;
+    
+    /* Szuper-finom háttér: SVG nyilak belső színátmenettel (fade-out) + sötétszürke alap */
+    background-image: 
+        url('data:image/svg+xml;utf8,<svg preserveAspectRatio="none" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.06"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient></defs><path d="M-5 0l15 20L-5 40h10l15-20L5 0z" fill="url(%23g)"/><path d="M10 0l15 20L10 40h10l15-20L20 0z" fill="url(%23g)"/><path d="M25 0l15 20L25 40h10l15-20L35 0z" fill="url(%23g)"/></svg>'), 
+        linear-gradient(to bottom, #2a2a2a 0%, #222222 100%);
+    
+    background-repeat: no-repeat, no-repeat;
+    background-position: left center, center;
+    background-size: 60px 100%, cover; 
+    
+    border-bottom: none; 
+    border-top: none; 
+    box-shadow: none; 
+    box-sizing: border-box;
+    margin: 0; 
+}
+
+
+
+.content-header-dark {
+    background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+    color: #fff;
+    text-align: center;
+    padding: 6px;
+    font-weight: bold;
+    border: 1px solid #000;
+    margin-bottom: 12px;
+    border-radius: 4px;
+}
+
+/* HTMX Transition Styles - Prevent flicker on content swap */
+#game-content {
+    min-height: 400px;
+}
+
+/* HTMX flicker megelőzés — specifikusabb szelektorral, !important nélkül */
+#game-content.htmx-swapping,
+#game-content.htmx-settling {
+    opacity: 1;
+}
+
+/* --- UNIFIED ALERTS (error / success / warning / info) --- */
+.alert-error,
+.alert-danger,
+.error-box,
+.error-msg {
+    position: fixed;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    width: fit-content;
+    min-width: 320px;
+    max-width: 550px;
+    background: rgba(74, 25, 25, 0.88);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    padding: 12px 40px 12px 20px;
+    border: 1px solid #7b2929;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    overflow-wrap: break-word;
+    isolation: isolate;
+}
+
+.alert-success {
+    position: fixed;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    width: fit-content;
+    min-width: 320px;
+    max-width: 550px;
+    background: rgba(46, 93, 42, 0.88);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    padding: 12px 40px 12px 20px;
+    border: 1px solid #3A7D35;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    overflow-wrap: break-word;
+    isolation: isolate;
+}
+
+/* Ágyazott gombok/br elemek kezelése az Alert üzenetekben (pl. Piac gombok) */
+.alert-success .btn,
+.alert-error .btn,
+.alert-success .game-tab,
+.alert-error .game-tab {
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+}
+
+/* Kereszt X (bezáró ikon) beégetve pseudo elemként */
+.alert-success::after,
+.alert-error::after,
+.alert-danger::after,
+.error-box::after,
+.error-msg::after {
+    content: '\2716';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    font-size: 12px;
+    color: #fff;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.alert-success:hover::after,
+.alert-error:hover::after,
+.alert-danger:hover::after,
+.error-box:hover::after,
+.error-msg:hover::after {
+    opacity: 1;
+}
+
+.alert-warning {
+    background: rgba(243, 156, 18, 0.15);
+    color: #e67e22;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(243, 156, 18, 0.35);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.alert-info {
+    background: rgba(52, 152, 219, 0.15);
+    color: #2980b9;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(52, 152, 219, 0.35);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Owner Panel Button — unified from inline styles */
+.owner-panel-btn {
+    background: #444;
+    color: #fff;
+    padding: 5px 10px;
+    text-decoration: none;
+    font-size: 12px;
+    border: 1px solid #666;
+    display: inline-block;
+}
+
+.owner-panel-btn:hover {
+    background: #555;
+    color: #fff;
+}
+
+/* Inline warning text (small, italic, red) — replaces inline color:red */
+.text-danger {
+    color: #cc0000;
+    font-style: italic;
+    font-size: 10px;
+}
+
+/* =========================================
+   NEW MENU STYLES (Spheres + Engraved Lines)
+   ========================================= */
+
+.menu-list {
+    list-style: none;
+    padding: 0 5px; /* Visszaadjuk a belső paddingot a listának */
+    margin: 0 0 2px 0;
+}
+
+/* Menu Item Separators (Engraved Effect) */
+.menu-list li {
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #3a3a3a;
+    height: 20px; /* Vissza a betonbiztos 20px-hez a lecsípések elkerülése miatt! */
+    box-sizing: border-box; 
+}
+
+.menu-list li:first-child {
+    border-top: none;
+}
+
+.menu-list li:last-child {
+    border-bottom: none;
+}
+
+.menu-list li a {
+    color: #ccc;
+    font-size: 10px; /* Visszagombolt betűméret a tökéletes kiféréshez */
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between; /* Menü szöveg balra, badge/ikon jobbra feszül */
+    align-items: center; /* Ez rögzíti a szöveget középre */
+    height: 100%; /* Kitölti a 21px-es LI-t */
+    padding: 0 5px 0 24px; /* Baloldali hely a golyónak */
+    position: relative;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* CSS 3D Sphere Icon */
+.menu-list li a::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    /* 3D gradient: Light top-left, shadow bottom-right */
+    background: radial-gradient(circle at 35% 35%, #ffffff, #aaaaaa, #555555, #222222);
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.menu-list li a:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.05);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Sphere Glow on Hover */
+.menu-list li a:hover::before {
+    background: radial-gradient(circle at 35% 35%, #ffffff, #cccccc, #888888, #444444);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+/* =========================================
+   NEWS FORM STYLES (Admin)
+   ========================================= */
+.news-form-container {
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+.news-form-container label {
+    color: #bbb;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.news-form-container input.form-control,
+.news-form-container textarea.form-control {
+    background-color: #0d0d0d;
+    border: 1px solid #333;
+    color: #eee;
+    padding: 8px;
+    border-radius: 4px;
+    width: 100%;
+    font-family: inherit;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.2s;
+}
+
+.news-form-container input.form-control:focus,
+.news-form-container textarea.form-control:focus {
+    border-color: #666;
+    outline: none;
+    background-color: #000;
+}
+
+.news-form-container .btn {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 3px;
+    border: 1px solid #000;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+}
+
+.news-form-container .btn-success {
+    background: linear-gradient(to bottom, #4ca64c, #2d662d);
+    color: #fff;
+    border-color: #1e441e;
+}
+
+.news-form-container .btn-success:hover {
+    background: linear-gradient(to bottom, #5cb85c, #3d8b3d);
+}
+
+.news-form-container .btn-secondary {
+    background: linear-gradient(to bottom, #555, #333);
+    color: #ccc;
+    border-color: #222;
+}
+
+.news-form-container .btn-secondary:hover {
+    background: linear-gradient(to bottom, #666, #444);
+    color: #fff;
+}
+
+/* =========================================
+   COMPONENT SYSTEM — Reusable UI Classes
+   ========================================= */
+
+/* --- Card Component --- */
+.card {
+    border: 1px solid #999;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+.card-header {
+    background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.card-body {
+    padding: 10px;
+    color: #333;
+    font-size: 12px;
+}
+
+.card-footer {
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #666;
+    border-top: 1px solid #ddd;
+    background: #f2f2f2;
+}
+
+/* --- Form Components --- */
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #999;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.form-textarea {
+    resize: vertical;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #333;
+    font-weight: bold;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+/* --- Button Components --- */
+.btn {
+    display: inline-block;
+    padding: 5px 14px;
+    border: 1px solid #666;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+    color: #fff;
+    border-color: #111;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to bottom, #555, #333);
+    color: #fff;
+}
+
+.btn-submit {
+    background: #f0f0f0;
+    color: #333;
+    border-color: #666;
+}
+
+.btn-submit:hover {
+    background: #e0e0e0;
+}
+
+.btn-danger {
+    background: #c0392b;
+    color: #fff;
+    border-color: #922b21;
+}
+
+.btn-danger:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* --- Modal Components --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 25px 35px;
+    text-align: center;
+    min-width: 300px;
+}
+
+.modal-title {
+    font-size: 16px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* --- Tab Navigation (Unified — market-standard) --- */
+.game-tab-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.game-tab {
+    background: #333;
+    color: #ddd;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+
+.game-tab:hover {
+    background: #444;
+    color: #fff;
+}
+
+.game-tab.active {
+    background: #555;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* --- Utility Classes --- */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: #888;
+    font-size: 11px;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+.text-small {
+    font-size: 10px;
+}
+
+.text-gold {
+    color: #ffcc00;
+}
+
+.text-green {
+    color: #009900;
+}
+
+.text-red {
+    color: #cc0000;
+}
+
+.mt-5 {
+    margin-top: 5px;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-5 {
+    margin-bottom: 5px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.p-5 {
+    padding: 5px;
+}
+
+.p-10 {
+    padding: 10px;
+}
+
+.p-15 {
+    padding: 15px;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gap-5 {
+    gap: 5px;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+
+.btn-primary:hover {
+    background: linear-gradient(to bottom, #555, #333);
+    color: #fff;
+}
+
+.btn-submit {
+    background: #f0f0f0;
+    color: #333;
+    border-color: #666;
+}
+
+.btn-submit:hover {
+    background: #e0e0e0;
+}
+
+.btn-danger {
+    background: #c0392b;
+    color: #fff;
+    border-color: #922b21;
+}
+
+.btn-danger:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* --- Modal Components --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 25px 35px;
+    text-align: center;
+    min-width: 300px;
+}
+
+.modal-title {
+    font-size: 16px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* --- Tab Navigation --- */
+.tab-nav {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    gap: 2px;
+}
+
+.tab-link {
+    padding: 8px 24px;
+    background: #555;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px 4px 0 0;
+}
+
+.tab-link:hover {
+    background: #666;
+    color: #fff;
+}
+
+.tab-link.active {
+    background: #444;
+}
+
+/* --- Utility Classes --- */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: #888;
+    font-size: 11px;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+.text-small {
+    font-size: 10px;
+}
+
+.text-gold {
+    color: #ffcc00;
+}
+
+.text-green {
+    color: #009900;
+}
+
+.text-red {
+    color: #cc0000;
+}
+
+.mt-5 {
+    margin-top: 5px;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-5 {
+    margin-bottom: 5px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.p-5 {
+    padding: 5px;
+}
+
+.p-10 {
+    padding: 10px;
+}
+
+.p-15 {
+    padding: 15px;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gap-5 {
+    gap: 5px;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Postal Menu Highlight (Incoming Packages) */
+.postal-menu-highlight {
+    color: #ffcc00 !important;
+    text-shadow: 0 0 5px rgba(255, 204, 0, 0.5) !important;
+    transition: color 0s, text-shadow 0s;
+}
+
+.postal-menu-fade {
+    color: #ddd !important;
+    text-shadow: none !important;
+    transition: color 3s ease-out, text-shadow 3s ease-out !important;
+}
+
+/* =========================================
+   MENU TOOLTIP STYLES
+   ========================================= */
+.menu-item-with-tooltip {
+    position: relative;
+}
+
+.menu-tooltip {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: -5px;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+
+/* Hover effect */
+.menu-item-with-tooltip:hover .menu-tooltip {
+    opacity: 1;
+    visibility: visible;
+    margin-left: 8px; /* Slight slide-in animation */
+}

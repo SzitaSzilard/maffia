@@ -1,0 +1,73 @@
+{% if sellers is empty %}
+    <div style="padding: 10px !important; text-align: center !important; font-size: 13px !important; color: #666 !important;">
+        További részletek nem találhatók.
+    </div>
+{% else %}
+<div style="padding: 4px 0 !important; margin: 0 !important;">
+    <table style="width: 100% !important; border-collapse: collapse !important; border: none !important; font-size: 12px !important; font-family: Arial, sans-serif !important; color: #333 !important; background: transparent !important;">
+        <thead>
+            <tr style="font-weight: bold !important; color: #555 !important; text-align: left !important; border: none !important;">
+                {% if category == 'vehicle' %}
+                    <td style="padding-left: 30px !important; width: 25% !important; border: none !important;">Gyorsaság</td>
+                    <td style="width: 15% !important; border: none !important;">Biztonság</td>
+                    <td style="width: 15% !important; border: none !important;">Ár</td>
+                    <td style="width: 25% !important; border: none !important;">Eladó</td>
+                    <td style="width: 20% !important; border: none !important;">Vétel</td>
+                {% else %}
+                    <td style="padding-left: 30px !important; width: 25% !important; border: none !important;">Darabár</td>
+                    <td style="width: 15% !important; border: none !important;">Készlet</td>
+                    <td style="width: 30% !important; border: none !important;">Eladó</td>
+                    <td style="width: 30% !important; border: none !important;">Vétel</td>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for seller in sellers %}
+            <tr style="border: none !important;">
+                {% if category == 'vehicle' %}
+                    <td style="padding-left: 30px !important; padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                        {{ seller.effective_speed }}
+                    </td>
+                    <td style="padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                        {{ seller.effective_safety }}
+                    </td>
+                    <td style="padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                        {% if seller.currency == 'credit' %}
+                            {{ seller.price|number_format(0, '.', ',') }} Kredit
+                        {% else %}
+                            ${{ seller.price|number_format(0, '.', ',') }}
+                        {% endif %}
+                    </td>
+                {% else %}
+                    <td style="padding-left: 30px !important; padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                        {% if seller.currency == 'credit' %}
+                            {{ seller.price|number_format(0, '.', ',') }} Kredit
+                        {% else %}
+                            ${{ seller.price|number_format(0, '.', ',') }}
+                        {% endif %}
+                    </td>
+                    <td style="padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                        {{ seller.quantity }} db
+                    </td>
+                {% endif %}
+                <td style="padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                    <a href="/profil/{{ seller.seller_name }}" style="color: #333 !important; text-decoration: none !important;">{{ seller.seller_name }}</a>
+                </td>
+                <td style="padding-top: 5px !important; padding-bottom: 5px !important; border: none !important;">
+                    <form hx-post="/piac/vasarlas/{{ seller.market_id }}" hx-target="this" hx-swap="outerHTML" style="margin: 0 !important; display: flex !important; align-items: center !important; gap: 4px !important;" hx-disabled-elt="button[type='submit']">
+                        {{ csrf.keys|raw }}
+                        {% if category != 'vehicle' %}
+                            <input type="number" name="quantity" value="1" min="1" max="{{ seller.quantity }}" style="width: 45px !important; text-align: center !important; padding: 1px !important; border: 1px solid #aaa !important; color: #000 !important; background: #fff !important; font-size: 12px !important; height: 18px !important;">
+                            <span style="color: #333 !important; font-size: 12px !important;">db</span>
+                        {% else %}
+                            <input type="hidden" name="quantity" value="1">
+                        {% endif %}
+                        <button type="submit" style="background: #f0f0f0 !important; border: 1px solid #aaa !important; padding: 1px 6px !important; cursor: pointer !important; color: #000 !important; font-size: 12px !important; height: 22px !important; font-family: Arial, sans-serif !important;">Megveszem</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}

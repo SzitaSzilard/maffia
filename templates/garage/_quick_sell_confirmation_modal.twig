@@ -1,0 +1,35 @@
+{# [2026-02-28] FIX: CSRF token hozzáadva + hx-disabled-elt #}
+<div class="text-center p-15">
+    <h3 style="margin-bottom: 20px; color: #333;">Jármű eladása</h3>
+    
+    <div style="margin-bottom: 20px; font-size: 14px;">
+        Biztosan eladod a következő járművet:<br>
+        <strong>{{ vehicle.name }}</strong>?
+        <br><br>
+        <span style="color: #080; font-weight: bold; font-size: 16px;">
+            Kapott összeg: ${{ sell_price|number_format(0, '.', ',') }}
+        </span>
+        <br><br>
+        <span style="color: #c00; font-size: 11px;">
+            (A művelet nem visszavonható!)
+        </span>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 20px;">
+        <form hx-post="/garazs/vehicle/{{ vehicle.id }}/quick-sell" hx-target="#modal-body" style="margin:0;">
+            {{ csrf.keys|raw }}
+            <button type="submit"
+                hx-disabled-elt="this"
+                style="background: linear-gradient(to bottom, #ffcccc, #ff9999); border: 1px solid #cc0000; color: #900; padding: 8px 20px; cursor: pointer;">
+                Igen, eladom
+            </button>
+        </form>
+        
+        <button 
+            hx-get="/garazs/vehicle/{{ vehicle.id }}" 
+            hx-target="#modal-body"
+            style="padding: 8px 20px; cursor: pointer;">
+            Mégse
+        </button>
+    </div>
+</div>

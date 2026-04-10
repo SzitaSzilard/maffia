@@ -1,0 +1,44 @@
+{% extends is_ajax ? 'layouts/ajax.twig' : 'layouts/base_game.twig' %}
+
+{% block title %}Kisstílű Bűnözés{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12" style="max-width: 600px; margin: 0 auto;">
+
+        {# Golden Standard Minta alapján: Felső Menüsor #}
+        <div class="mod-top-menu">
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'lopas' %}active{% endif %}"
+               hx-get="/kisstilubunozes/lopas" hx-target="#game-content" hx-push-url="true">
+                Lopás
+            </a>
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'kirablas' %}active{% endif %}"
+               hx-get="/kisstilubunozes/kirablas" hx-target="#game-content" hx-push-url="true">
+                Kirablás
+            </a>
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'betores' %}active{% endif %}"
+               hx-get="/kisstilubunozes/betores" hx-target="#game-content" hx-push-url="true">
+                Betörés
+            </a>
+        </div>
+
+        {# ALMODULOK BEÖMLŐ PONTJA #}
+        <div id="petty-crime-content">
+            {% if active_tab == 'lopas' %}
+                {% include 'game/petty_crime/_lopas.twig' %}
+            {% elseif active_tab == 'kirablas' %}
+                <div style="background:#eee; border:1px solid #999; padding:20px; text-align:center; font-weight:bold; color:#555;">
+                    Kirablás felület előkészítése folyamatban...
+                </div>
+            {% elseif active_tab == 'betores' %}
+                <div style="background:#eee; border:1px solid #999; padding:20px; text-align:center; font-weight:bold; color:#555;">
+                    Betörés felület előkészítése folyamatban...
+                </div>
+            {% else %}
+                {% include 'game/petty_crime/_lopas.twig' ignore missing %}
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

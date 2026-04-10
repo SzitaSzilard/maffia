@@ -1,0 +1,121 @@
+{% extends layout %}
+
+{% block content %}
+<style>
+    .ammo-card {
+        width: 300px;
+        margin: 0 auto;
+        background: #e0e0e0;
+        border: 1px solid #000;
+        text-align: center;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+    .ammo-header {
+        background: #333;
+        color: #fff;
+        padding: 5px;
+        font-weight: bold;
+        border-bottom: 2px solid #555;
+    }
+    .ammo-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-bottom: 1px solid #000;
+        filter: grayscale(100%); /* Match screenshot style */
+    }
+    .ammo-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    .ammo-table td {
+        border: 1px solid #000;
+        padding: 5px; 
+    }
+    .ammo-label {
+        background: #e0e0e0;
+        text-align: left;
+        width: 40%;
+    }
+    .ammo-value {
+        background: #e0e0e0;
+        text-align: left;
+        font-weight: bold;
+    }
+    .buy-btn {
+        background: linear-gradient(to bottom, #f0f0f0, #ccc);
+        border: 1px solid #999;
+        padding: 2px 10px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    .owner-link {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #000;
+    }
+    .owner-link a {
+        color: #000;
+        text-decoration: underline;
+        font-weight: bold;
+    }
+</style>
+
+<div class="ammo-card">
+    <div class="ammo-header">Töltény gyár</div>
+    <!-- Placeholder image until asset is moved/linked properly -->
+    <!-- Placeholder image until asset is moved/linked properly -->
+    <img src="/assets/ammo_factory.png" alt="Töltények" class="ammo-image">
+
+
+    {# [2026-02-28] FIX: CSRF token hozzáadva #}
+    <form hx-post="/toltenygyar" hx-target="#game-content" hx-swap="innerHTML">
+        {{ csrf.keys|raw }}
+        <input type="hidden" name="buy_ammo" value="1">
+        <table class="ammo-table">
+            <tr>
+                <td class="ammo-label">Töltény készlet:</td>
+                <td class="ammo-value">{{ factory.ammo_stock|number_format(0, ',', ',') }}</td>
+            </tr>
+            <tr>
+                <td class="ammo-label">Töltény ára:</td>
+                <td class="ammo-value">${{ factory.ammo_price }} /db</td>
+            </tr>
+            <tr>
+                <td class="ammo-label">Vétel:</td>
+                <td class="ammo-value" style="background: #e0e0e0;">
+                    <input type="number" name="quantity" style="width: 80px; padding: 2px;" placeholder="db"> 🛡️ db
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center; background: #e0e0e0;">
+                    <button type="submit" class="buy-btn" hx-disabled-elt="this">Megveszem</button>
+                    <div style="font-size: 10px; font-style: italic; margin-top: 2px;">Minimum vásárlási mennyiség: 100 db</div>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <div class="owner-link text-center" style="padding: 5px; border-top: 1px solid #000;">
+        Tulajdonosa: 
+        <strong>
+        {% if factory.owner_id %}
+            <a href="/{{ factory.owner_name }}">{{ factory.owner_name }}</a>
+        {% else %}
+            Állam
+        {% endif %}
+        </strong>
+    </div>
+</div>
+
+{% if is_owner %}
+<div class="text-center mt-10">
+    <a href="/toltenygyar/kezel" class="owner-panel-btn">Tulajdonosi Panel</a>
+</div>
+{% endif %}
+
+{% endblock %}
+

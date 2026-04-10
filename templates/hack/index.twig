@@ -1,0 +1,316 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .hack-container {
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+        color: #222;
+        font-family: Arial, sans-serif;
+        padding-top: 20px;
+    }
+
+    .hack-panel {
+        background-color: #f2f2f2;
+        border: 1px solid #111;
+        margin-bottom: 15px;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .hack-panel-header {
+        background-color: #383838;
+        color: #ffffff;
+        font-size: 14px;
+        text-align: center;
+        padding: 7px;
+        border-bottom: 1px solid #111;
+        font-weight: bold;
+    }
+
+    .hack-panel-body {
+        padding: 10px;
+    }
+
+    .hack-container p {
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+    }
+
+    .italic {
+        font-style: italic;
+    }
+
+    /* 1. Panel: Lista stílusok */
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 15px 0;
+    }
+
+    .feature-list li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 6px;
+    }
+
+    .feature-list .dot {
+        color: #d11a1a;
+        font-size: 11px;
+        margin-right: 8px;
+        margin-top: 2px;
+    }
+
+    .feature-list .text-content {
+        flex: 1;
+        font-size: 12px;
+    }
+
+    /* Gombok stílusa */
+    .hack-btn-container {
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .hack-btn {
+        background: linear-gradient(to bottom, #fafafa, #e0e0e0);
+        border: 1px solid #777;
+        padding: 4px 12px;
+        font-family: inherit;
+        font-size: 13px;
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .hack-btn:hover {
+        background: linear-gradient(to bottom, #fff, #ebebeb);
+    }
+
+    /* Táblázat stílusok a 2. és 3. panelhez */
+    .hack-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .hack-table th, .hack-table td {
+        border-bottom: 1px solid #111;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: middle;
+        font-size: 12px;
+    }
+
+    .hack-table th {
+        font-weight: bold;
+        background-color: #e8e8e8;
+    }
+
+    /* 2. Panel specifikus táblázat */
+    .panel-2-table th:first-child,
+    .panel-2-table td:first-child {
+        border-right: 1px solid #111;
+    }
+
+    .panel-2-table td:last-child,
+    .panel-2-table th:last-child {
+        text-align: center;
+        width: 55px;
+    }
+
+    .panel-2-table tr:last-child td {
+        border-bottom: none;
+        padding: 8px;
+    }
+
+    /* 3. Panel specifikus stílusok */
+    .status-bar {
+        padding: 8px 10px;
+        border-bottom: 1px solid #111;
+        background-color: #e8e8e8;
+        font-size: 12px;
+    }
+
+    .panel-3-table tr:last-child td {
+        border-bottom: none;
+        text-align: center;
+        font-weight: bold;
+        background-color: #f2f2f2;
+        padding: 12px;
+    }
+
+    /* Rádiógombok és címkék elrendezése */
+    .radio-label {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+    }
+
+    .radio-label input[type="radio"] {
+        margin: 2px 8px 0 0;
+        cursor: pointer;
+    }
+
+    /* Áthúzott és kikapcsolt szöveg stílusa */
+    .disabled-strike {
+        color: #a34343;
+        text-decoration: line-through;
+    }
+</style>
+
+<div class="hack-container">
+
+    <div class="hack-panel">
+        <div class="hack-panel-header">Saját vírus fejlesztése</div>
+        <div class="hack-panel-body">
+            <p>Jelenlegi fejlettség: <strong>{{ virus_progress }}%</strong></p>
+            <p class="italic">Megadott % elérése után érhető el az adott funkció.</p>
+            
+            <ul class="feature-list">
+                <li>
+                    <span class="dot">●</span>
+                    <div class="text-content">
+                        <strong>Alapvető működés</strong> - <span class="italic">min. 10% fejlettség szükséges</span><br>
+                        <span class="italic">(Vírus terjesztéséhez szükséges funkciók),</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot">●</span>
+                    <div class="text-content">
+                        <strong>DDoS funkció</strong> - <span class="italic">min. 25% fejlettség szükséges</span><br>
+                        <span class="italic">(Túlterheléses támadási képesség, dark weben árusítható)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot">●</span>
+                    <div class="text-content">
+                        <strong>Kriptovaluta bányászat funkció</strong> - <span class="italic">min. 50% fejlettség szükséges</span><br>
+                        <span class="italic">(Kibányászott kriptovalutát pénzre lehet váltani)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot">●</span>
+                    <div class="text-content">
+                        <strong>Keylogger funkció</strong> - <span class="italic">min. 75% fejlettség szükséges</span><br>
+                        <span class="italic">(Billentyűleütéseket naplózza, bankkártya adatok begyűjtéséhez)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot">●</span>
+                    <div class="text-content">
+                        <strong>Zsarolóvírus funkció</strong> - <span class="italic">min. 95% fejlettség szükséges</span><br>
+                        <span class="italic">(Fertőzött számítógép zárolható, feloldásért váltságdíj kérhető)</span>
+                    </div>
+                </li>
+            </ul>
+
+            <p class="italic" style="font-size: 11px;">Minél fejlettebb, összetettebb a vírusod, annál bonyolultabb továbbfejleszteni, emiatt egyre nehezebb az előrelépés.</p>
+            <p class="italic" style="font-size: 11px; margin-bottom: 0;">A szoftverek folyamatos fejlődése miatt szükség van a vírust naponta fejleszteni, ha nem teszed akkor 0.2%-al csökkenni fog a fejlettségi szint naponta.</p>
+            
+            <div class="hack-btn-container">
+                <button class="hack-btn">Vírus fejlesztése</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="hack-panel">
+        <div class="hack-panel-header">Vírusod terjesztése</div>
+        <table class="hack-table panel-2-table">
+            <thead>
+                <tr>
+                    <th>Módszer</th>
+                    <th>Esély</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" name="method">
+                            <span>Nagyvállalatok, közintézmények rendszereibe való bejutás, majd a vírus telepítése az eszközökre</span>
+                        </label>
+                    </td>
+                    <td>52%</td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" name="method">
+                            <span>Szoftverterjesztő oldal feltörése, majd egy adott szoftver telepítőjébe beépítésével történő terjesztés</span>
+                        </label>
+                    </td>
+                    <td>22%</td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" name="method">
+                            <span>IP címek tömeges szkennelése sebezhető eszközöket keresve<br><span class="italic">(szerverpark bérlés szükséges)</span></span>
+                        </label>
+                    </td>
+                    <td>18%</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="hack-btn-container" style="margin-top: 0;">
+                            <button class="hack-btn">Hackelés</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="hack-panel">
+        <div class="hack-panel-header">Zombihálózatod felhasználása</div>
+        <div class="status-bar">
+            Jelenleg <strong>{{ zombie_count }} db</strong> fertőzött eszközhöz van hozzáférésed
+        </div>
+        <table class="hack-table panel-3-table">
+            <thead>
+                <tr>
+                    <th>Tevékenységek</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">DDoS funkció aktiválása és dark weben való árusítás</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Kriptovaluta bányászat funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Keylogger funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Zsarolóvírus funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Nem elérhető egyik funkció sem, fejleszd a vírusodat!</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

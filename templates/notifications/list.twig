@@ -1,0 +1,163 @@
+{# Notifications List #}
+<style>
+@keyframes unread-fade {
+    0%   { box-shadow: inset 0 0 0 2px #cc0000, 0 0 6px rgba(204, 0, 0, 0.4); }
+    100% { box-shadow: none; }
+}
+.notif-unread {
+    box-shadow: inset 0 0 0 2px #cc0000, 0 0 6px rgba(204, 0, 0, 0.4);
+    animation: unread-fade 5s linear forwards;
+}
+.top-controls {
+    background-color: #f0f0f0;
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.top-controls button {
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 12px;
+    padding: 2px 6px;
+    background-color: #f5f5f5;
+    border: 1px solid #888;
+    cursor: pointer;
+}
+.top-controls button:hover {
+    background-color: #e5e5e5;
+}
+.message-box {
+    border: 1px solid #000;
+    background-color: #f5f5f5;
+    margin-bottom: 15px;
+}
+.message-header {
+    background-color: #3d3d3d;
+    color: #e8e8e8;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    border-bottom: 1px solid #000;
+}
+.message-content {
+    padding: 8px 10px;
+    line-height: 1.4;
+    color: #333;
+    font-size: 12px;
+}
+.message-content p {
+    margin: 0 0 10px 0;
+}
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+.checkbox-container {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+}
+.checkbox-container input {
+    margin: 0 4px 0 0;
+}
+.notif-link {
+    font-size: 11px;
+    color: #444;
+    text-decoration: none;
+}
+.notif-link:hover {
+    text-decoration: underline;
+}
+.footer-text {
+    text-align: center;
+    color: #777;
+    font-size: 11px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+</style>
+
+<form id="notifications-form" method="post" action="/ertesitesek/torles">
+    {{ csrf.keys|raw }}
+
+    {# ACTION BUTTONS #}
+    <div class="top-controls">
+        <button type="button" onclick="NotificationsModule.showDeleteModal()">Kijelölt törlés</button>
+        |
+        <button type="button" onclick="NotificationsModule.selectAll()">Összes kijelölés</button>
+    </div>
+
+    {# MODULE TRANSLATIONS #}
+    {% set module_translations = {
+        'car_theft': 'Autólopás',
+        'organized_crime': 'Szervezett bűnözés',
+        'xp': 'Fejlődés',
+        'bank': 'Bank',
+        'postal': 'Posta',
+        'hospital': 'Kórház',
+        'market': 'Piac',
+        'garage': 'Garázs',
+        'system': 'Rendszer',
+        'tax': 'Adóhatóság',
+        'lottery': 'Lottó',
+        'combat': 'Harc'
+    } %}
+
+    {# NOTIFICATION LIST #}
+    {% if notifications is defined and notifications|length > 0 %}
+        {% for notif in notifications %}
+        <div class="message-box{% if not notif.is_read %} notif-unread{% endif %}" data-notification-id="{{ notif.id }}">
+
+            <div class="message-header">
+                {% set module_name = notif.source_module|default('system') %}
+                &gt; {{ module_translations[module_name] ?? module_name }} - {{ notif.created_at|date('Y-m-d H:i:s') }}
+            </div>
+
+            <div class="message-content">
+                <p>{{ notif.message|nl2br }}</p>
+                <div class="checkbox-container">
+                    <label>
+                        <input type="checkbox" name="notification_ids[]" value="{{ notif.id }}"> Kijelölés
+                    </label>
+                    {% if notif.link %}
+                    <a href="#" hx-get="{{ notif.link }}" hx-target="#game-content" hx-push-url="true" class="notif-link">
+                        🔗 Ugrás →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+
+        <div class="footer-text">
+            Az utolsó 50-nél több, 30 napnál régebbi értesítések automatikusan törlésre kerülnek!
+        </div>
+    {% else %}
+        <div class="message-box">
+            <div class="message-content" style="text-align: center; padding: 20px;">
+                📭 Nincsenek értesítéseid.
+            </div>
+        </div>
+    {% endif %}
+
+</form>
+
+{# DELETE CONFIRMATION MODAL #}
+<div id="delete-modal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-title">🗑️ Értesítések törlése</div>
+        <div id="delete-modal-text" class="mb-20" style="color: #555;">
+            Biztosan törlöd a kijelölt <span id="delete-count" class="text-red text-bold">0</span> értesítést?
+        </div>
+        <div>
+            <button type="button" onclick="NotificationsModule.confirmDelete()" class="btn btn-danger" style="margin-right: 10px;">
+                ✓ Törlés
+            </button>
+            <button type="button" onclick="NotificationsModule.hideDeleteModal()" class="btn btn-primary">
+                ✕ Mégse
+            </button>
+        </div>
+    </div>
+</div>

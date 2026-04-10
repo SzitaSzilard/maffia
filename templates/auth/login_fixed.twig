@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMafia - Belépés (Mockup)</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="fokontener">
+    <div class="login-doboz">
+        <div class="doboz-fejlec">
+            NetMafia Online Mafia Game
+        </div>
+
+        <div class="doboz-tartalom">
+            
+            {% if error %}
+            <div class="alert-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+             {% if success %}
+            <div class="alert-success">
+                {{ success }}
+            </div>
+            {% endif %}
+
+            {% if warning %}
+            <div class="alert-warning">
+                ⚠️ {{ warning }}
+            </div>
+            {% endif %}
+
+            <p class="bevezeto-szoveg">
+                Szeretnél egy ilyen, vagy ennél sokkal jobb <span>Online Maffia Játékot</span>?<br>
+                Gyere próbáld ki, milyen a maffiózók élete, legyél te New York legnagyobb gengsztere...
+            </p>
+
+            <form action="/login" method="POST">
+                
+                {{ csrf.keys|raw }}
+
+                <div class="urlap-sor">
+                    <label for="nev">Felhasználónév:</label>
+                    <input type="text" id="nev" name="username" value="{{ last_username }}">
+                </div>
+
+                <div class="urlap-sor">
+                    <label for="jelszo">Jelszó:</label>
+                    <input type="password" id="jelszo" name="password">
+                </div>
+
+                <div class="gomb-tarolo">
+                    <button type="submit" hx-disabled-elt="this">Belépés</button>
+                </div>
+            </form>
+
+            <div style="font-size: 11px; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                <a href="/register" style="color: #d00; font-weight: bold; text-decoration: none;">Regisztráció</a> |
+                <a href="#" style="text-decoration: none; color: #555;">Elfelejtett jelszó</a> |
+                <a href="#" style="text-decoration: none; color: #555;">Rólunk</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="font-size: 10px; color: #666; margin-top: 5px;">
+        Kapcsolat: teszt@teszt.hu | ÁSZF(teszt)
+    </div>
+</div>
+
+</body>
+</html>
+

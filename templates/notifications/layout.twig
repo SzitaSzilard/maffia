@@ -1,0 +1,23 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+
+
+<div class="notifications-container p-10">
+    
+    {# SUCCESS MESSAGE #}
+    {% if notification_success %}
+    <div class="alert-success">
+        ✓ {{ notification_success }}
+    </div>
+    {% endif %}
+    
+    {# NOTIFICATION LIST #}
+    {% include 'notifications/list.twig' %}
+
+
+
+</div>
+
+<script src="/js/notifications.js"></script>
+{% endblock %}

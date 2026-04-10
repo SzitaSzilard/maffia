@@ -1,0 +1,113 @@
+<style>
+    .xp-tooltip {
+        position: relative;
+        cursor: help;
+    }
+    .xp-tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: 130%;
+        right: 0;
+        left: auto;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 11px;
+        white-space: pre-line;
+        min-width: 180px;
+        text-align: left;
+        z-index: 999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .xp-tooltip:hover::after {
+        opacity: 1;
+    }
+    .sleep-indicator-glass {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #555 0%, #1a1a1a 80%) !important;
+        box-shadow: inset 1px 1px 4px rgba(255,255,255,0.5), inset -3px -3px 6px rgba(0,0,0,0.9), 0px 4px 6px rgba(0,0,0,0.6) !important;
+        border: 2px solid #242424 !important;
+        color: #f1f1f1 !important;
+        font-size: 16px;
+        transition: transform 0.2s;
+        text-decoration: none;
+        position: absolute;
+        left: -55px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+    }
+    .sleep-indicator-glass:hover {
+        background: radial-gradient(circle at 30% 30%, #686868 0%, #202020 80%) !important;
+        transform: translateY(-50%) scale(1.05);
+    }
+</style>
+<div style="position: relative;">
+    {% if user.sleep_end_at is not empty %}
+    <form action="/otthon/alvas/felkeles" method="POST" hx-post="/otthon/alvas/felkeles" hx-target="#game-content" style="margin:0; padding:0; display:inline;">
+        {{ csrf.keys|raw }}
+        <button type="submit" class="sleep-indicator-glass" style="cursor:pointer; outline:none; padding: 0; box-sizing: border-box;" title="Jelenleg az igazak álmát alszod! Rákattintva azonnal felébredsz.">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="20" height="20" fill="#e0e0e0" style="margin-top: 1px;">
+                <path d="M176 256c44.11 0 80-35.89 80-80s-35.89-80-80-80-80 35.89-80 80 35.89 80 80 80zm352-128H304c-8.84 0-16 7.16-16 16v144H64V80c0-8.84-7.16-16-16-16H16C7.16 64 0 71.16 0 80v352c0 8.84 7.16 16 16 16h32c8.84 0 16-7.16 16-16v-48h512v48c0 8.84 7.16 16 16 16h32c8.84 0 16-7.16 16-16V240c0-61.86-50.14-112-112-112z"/>
+            </svg>
+        </button>
+    </form>
+    {% endif %}
+
+<table class="stats-table">
+    <thead>
+        <tr>
+            <th>NÉV</th>
+            <th>HELY</th>
+            <th>RANG</th>
+            <th>PÉNZ</th>
+            <th>ENERGIA</th>
+            <th>ÉLET</th>
+            <th>XP</th>
+            <th>TÖLTÉNY</th>
+            <th>KREDIT</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <!-- NÉV -->
+            <td style="white-space: nowrap;">
+                <a href="#" hx-get="/{{ user.username }}" hx-target="#game-content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+                    {{ user.username }}
+                </a>
+            </td>
+            <!-- HELY -->
+            <td>
+                <img src="/public/images/flags/{{ user.country_code|lower }}.png" alt="{{ user.country_code }}" title="{{ user.country_name }}" style="height: 12px; vertical-align: middle; box-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+            </td>
+            <!-- RANG -->
+            <td>{{ user.rank_name }}</td>
+            <!-- PÉNZ -->
+            <td id="stat-money" data-value="{{ user.money }}">
+                ${{ user.money|number_format(0, ',', ',') }}
+            </td>
+            <!-- ENERGIA -->
+            <td id="stat-energy" data-value="{{ user.energy }}">{{ user.energy }}%</td>
+            <!-- ÉLET -->
+            <td id="stat-health" data-value="{{ user.health }}">{{ user.health }}%</td>
+            <!-- XP -->
+            <td id="stat-xp" data-value="{{ user.xp }}" class="xp-tooltip"
+                data-tooltip="{% if user.next_rank.nextRankName %}Következő rang: {{ user.next_rank.nextRankName }}&#10;Hátra van: {{ user.next_rank.xpRemaining|number_format(0, ',', ',') }} XP&#10;Haladás: {{ user.next_rank.progressPercent }}%{% else %}Maximális rang elérve! 👑{% endif %}">{{ user.xp|number_format(0, ',', ',') }}</td>
+            <!-- TÖLTÉNY -->
+            <td id="stat-bullets" data-value="{{ user.bullets }}">{{ user.bullets|number_format(0, ',', ',') }}</td>
+            <!-- KREDIT -->
+            <td id="stat-credits" data-value="{{ user.credits }}">{{ user.credits|number_format(0, ',', ',') }}</td>
+        </tr>
+    </tbody>
+</table>
+</div>

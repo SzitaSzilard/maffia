@@ -1,0 +1,74 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<div class="content-header-dark">KOCSMA</div>
+
+<div class="kocsma-container p-10">
+    
+    <div class="chat-box" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; background: #fff; padding: 10px; margin-bottom: 10px;">
+        {% for msg in messages %}
+            <div class="chat-message" style="border-bottom: 1px solid #eee; padding: 2px 0;">
+                <strong style="color: {{ msg.is_admin ? 'blue' : '#aa0000' }};">
+                    <a href="#" hx-get="/{{ msg.username }}" hx-target="#game-content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+                        {{ msg.username }}
+                    </a>:
+                </strong> 
+                {{ msg.message }}
+                <span class="text-muted text-small">({{ msg.created_at|date('H:i') }})</span>
+            </div>
+        {% else %}
+            <div class="text-muted" style="font-style: italic;">Még nincsenek üzenetek.</div>
+        {% endfor %}
+    </div>
+
+    <form method="post" action="/kocsma/chat" hx-disabled-elt="button[type='submit']">
+        {{ csrf.keys|raw }}
+        <div style="display: flex;">
+            <input type="text" name="message" placeholder="Ide írd az üzeneted..." class="form-input" style="flex-grow: 1;" required>
+            <button type="submit" class="btn btn-submit" style="margin-left: 5px;">Küldés</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    if (window.NetMafiaRealtime) {
+        NetMafiaRealtime.joinRoom('kocsma');
+        NetMafiaRealtime.off('message:kocsma');
+        NetMafiaRealtime.on('message:kocsma', function(data) {
+            var chatBox = document.querySelector('.chat-box');
+            var msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message';
+            msgDiv.style.borderBottom = '1px solid #eee';
+            msgDiv.style.padding = '2px 0';
+            
+            // Fix DOM XSS: use textContent for dynamic content
+            var strong = document.createElement('strong');
+            strong.style.color = '#aa0000';
+            
+            var a = document.createElement('a');
+            a.href = '#';
+            a.setAttribute('hx-get', '/' + data.username);
+            a.setAttribute('hx-target', '#game-content');
+            a.setAttribute('hx-push-url', 'true');
+            a.style.color = 'inherit';
+            a.style.textDecoration = 'none';
+            a.textContent = data.username;
+            
+            strong.appendChild(a);
+            strong.appendChild(document.createTextNode(': '));
+            
+            msgDiv.appendChild(strong);
+            msgDiv.appendChild(document.createTextNode(data.content + ' '));
+            
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'text-muted text-small';
+            timeSpan.textContent = '(' + new Date().toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'}) + ')';
+            
+            msgDiv.appendChild(timeSpan);
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            htmx.process(msgDiv);
+        });
+    }
+</script>
+{% endblock %}

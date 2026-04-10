@@ -1,0 +1,48 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<div style="text-align: center; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #333; margin: 20px auto; line-height: 1.4;">
+    {% set s_remaining = sleep_status.seconds_remaining|default(0) %}
+    {% set elapsed_hours = sleep_status.hours_elapsed|default(0) %}
+    
+    {% set s_hours = (s_remaining / 3600)|round(0, 'floor') %}
+    {% set s_minutes = ((s_remaining % 3600) / 60)|round(0, 'floor') %}
+    {% set s_seconds = s_remaining % 60 %}
+    {% set total_minutes = (s_hours * 60) + s_minutes %}
+
+    Épp alszol, ezért nem tudsz tevékenykedni.<br>
+    Hátralévő idő: <span id="sleep-guard-countdown" data-remaining="{{ s_remaining }}"><span class="m-minutes">{{ total_minutes }}</span> perc <span class="m-seconds">{{ s_seconds }}</span> másodperc</span><br>
+    
+    <form action="/otthon/alvas/felkeles" method="POST" style="display: inline-block; margin: 0;">
+        {{ csrf.keys|raw }}
+        <button type="submit" style="background: none; border: none; padding: 0; color: #444; text-decoration: underline; cursor: pointer; font-size: 12px; font-family: inherit;">Kattints ide a felkeléshez</button> <span style="color: #333; text-decoration: none;">(Eddig {{ elapsed_hours }} órát aludtál)</span>
+    </form>
+</div>
+
+<script>
+    if (typeof sleepGuardInterval !== 'undefined') {
+        clearInterval(sleepGuardInterval);
+    }
+    var sleepGuardInterval = setInterval(function() {
+        var el = document.getElementById('sleep-guard-countdown');
+        if (!el) {
+            clearInterval(sleepGuardInterval);
+            return;
+        }
+        var remaining = parseInt(el.getAttribute('data-remaining'));
+        if (remaining <= 0) {
+            clearInterval(sleepGuardInterval);
+            window.location.reload(); 
+            return;
+        }
+        remaining--;
+        el.setAttribute('data-remaining', remaining);
+        
+        var t_m = Math.floor(remaining / 60);
+        var t_s = remaining % 60;
+        
+        el.querySelector('.m-minutes').innerText = t_m;
+        el.querySelector('.m-seconds').innerText = t_s;
+    }, 1000);
+</script>
+{% endblock %}

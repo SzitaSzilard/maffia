@@ -1,0 +1,218 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    /* Retro Gray UI Theme */
+    .countries-wrapper {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #000;
+        text-align: center;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
+    .header-main {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .header-desc {
+        font-size: 10px;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .building-section {
+        margin-bottom: 15px;
+        border: 1px solid #000;
+    }
+
+    .section-title {
+        background: linear-gradient(to bottom, #444, #222);
+        color: #fff;
+        font-weight: bold;
+        padding: 4px;
+        border-bottom: 1px solid #000;
+    }
+
+    .nm1-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #dcdcdc; /* Base gray */
+    }
+
+    .nm1-table th {
+        background-color: #eee;
+        border: 1px solid #000;
+        padding: 3px;
+        text-align: left;
+        font-weight: bold;
+        font-size: 10px;
+    }
+
+    .nm1-table td {
+        border: 1px solid #000;
+        padding: 3px;
+        text-align: left;
+    }
+
+    .nm1-table tr:nth-child(even) {
+        background-color: #dcdcdc; 
+    }
+    .nm1-table tr:nth-child(odd) {
+        background-color: #eaeaea; 
+    }
+    
+    .sort-icon {
+        float: right;
+        font-size: 9px;
+        cursor: pointer;
+    }
+    
+    /* Specific overrides for alignment */
+    .text-center { text-align: center !important; }
+    .text-right { text-align: right !important; }
+    
+    a.user-link {
+        color: #000;
+        text-decoration: underline;
+        font-weight: bold;
+    }
+</style>
+
+<div class="countries-wrapper">
+    <div class="header-main">Épületek</div>
+    <div class="header-desc">
+        A jelenleg működő épületekről látsz némi információt.<br>
+        (Az az épület amelyiknek nincs tulaja, nem kerül ki ide.)<br>
+        Minden épület tulajdonos egyben szakszervezeti tag is, ők az országok épületeinek<br>
+        vezetői, illetve komolyabb szervezett bűnözésekhez elengedhetetlen tagok.
+    </div>
+
+    {# --- Macro for Tables --- #}
+    {% macro building_table(title, items, columns, type) %}
+    <div class="building-section">
+        <div class="section-title">{{ title }}</div>
+        <table class="nm1-table">
+            <thead>
+                <tr>
+                    {% for col in columns %}
+                    <th>
+                        {{ col.label }} 
+                        {% if col.sortable %}<span class="sort-icon">⬍</span>{% endif %}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.country_name }}</td>
+                    
+                    {# Ha az épület AKTÍV (Van tulaj VAGY Beállított Rendszer) #}
+                    {% if item.is_active %}
+                        <td>
+                            {% if item.owner_name %}
+                                <a href="#" class="user-link" hx-get="/profil/{{ item.owner_id }}" hx-target="#game-content">{{ item.owner_name }}</a>
+                            {% else %}
+                                A rendszer
+                            {% endif %}
+                        </td>
+
+                        {# Custom Columns based on Type #}
+                        {% if type == 'gas_station' %}
+                            <td>${{ item.usage_price }}/liter</td>
+                            
+                        {% elseif type == 'ammo_factory' %}
+                            <td>{{ item.ammo_stock|number_format }} db</td>
+                            <td>${{ item.ammo_price }}</td>
+                            
+                        {% elseif type == 'lottery' %}
+                            <td>${{ (item.jackpot|default(0))|number_format }}</td>
+                            <td>{{ item.next_draw|default('Később') }}</td>
+                            <td><a href="#" style="color:#000;">info</a></td>
+                            
+                        {% elseif type == 'hospital' %}
+                            <td>${{ item.price_per_hp }}</td>
+
+                        {% elseif type == 'highway' %}
+                            <td>$1k / $3k / $12k</td>
+                            
+                        {# Basic types: Airport, Restaurant - No extra columns #}
+                        {% endif %}
+
+                    {# Ha az épület NEM AKTÍV (Nincs rekord VAGY 0-ás Rendszer) #}
+                    {% else %}
+                        {# "Fejlesztés alatt" #}
+                        <td colspan="{{ columns|length - 1 }}" style="color: grey; font-style: italic;">
+                            Fejlesztés alatt
+                        </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ columns|length }}" class="text-center">Nincs elérhető adat.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endmacro %}
+
+    {# --- Render Sections --- #}
+    
+    {# 1. Benzinkút #}
+    {{ _self.building_table('Benzinkút', gas_stations, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true},
+        {'label': 'Benzin ára', 'sortable': true}
+    ], 'gas_station') }}
+
+    {# 2. Töltény gyár #}
+    {{ _self.building_table('Töltény gyár', ammo_factories, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true},
+        {'label': 'Készlet', 'sortable': true},
+        {'label': 'Töltény Ár', 'sortable': true}
+    ], 'ammo_factory') }}
+
+    {# 3. Lottó #}
+    {{ _self.building_table('Lottó', lotteries, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true},
+        {'label': 'Össz. felhalmozva', 'sortable': true},
+        {'label': 'Következő sorsolás', 'sortable': true},
+        {'label': 'Egyéb', 'sortable': false}
+    ], 'lottery') }}
+
+    {# 4. Repülőtér #}
+    {{ _self.building_table('Repülőtér', airports, [
+        {'label': 'Ország', 'sortable': false},
+        {'label': 'Tulaj', 'sortable': false}
+    ], 'airport') }}
+
+    {# 5. Kórház #}
+    {{ _self.building_table('Kórház', hospitals, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true},
+        {'label': 'Egy élet egység', 'sortable': true}
+    ], 'hospital') }}
+
+    {# 6. Étterem #}
+    {{ _self.building_table('Étterem', restaurants, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true}
+    ], 'restaurant') }}
+
+    {# 7. Autópálya #}
+    {# 7. Autópálya #}
+    {{ _self.building_table('Autópálya', highways, [
+        {'label': 'Ország', 'sortable': true},
+        {'label': 'Tulaj', 'sortable': true},
+        {'label': 'Matrica Árak (7/10/∞)', 'sortable': false}
+    ], 'highway') }}
+
+</div>
+{% endblock %}

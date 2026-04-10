@@ -1,0 +1,1 @@
+ALTER TABLE buildings MODIFY COLUMN payout_mode VARCHAR(20) NOT NULL DEFAULT 'instant';

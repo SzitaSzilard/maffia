@@ -1,0 +1,133 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .expand-container { text-align: center; }
+    .garages-table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; }
+    .garages-table td { border: 1px solid #000; padding: 5px; }
+    .garages-table thead { background: #fff; font-weight: bold; }
+    .garages-table tbody tr.purchased { background: #eee; }
+    .garages-table tbody tr.property { background: #ddd; }
+    .garages-table tbody tr.empty { background: #eee; }
+    .garages-table td.text-left { text-align: left; }
+    .garages-table td.empty-msg { padding: 10px; text-align: center; color: #666; }
+    
+    .buy-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; }
+    .buy-table thead { font-weight: bold; }
+    .buy-table td { border: 1px solid #000; padding: 5px; }
+    
+    .sell-link { color: #a00; }
+    .back-link { margin-top: 20px; }
+</style>
+
+<div class="expand-container">
+
+    <div class="content-header-dark">
+        Garázsaid (Összes férőhely: {{ total_capacity }})
+    </div>
+
+    <table class="garages-table">
+        <thead>
+            <tr>
+                <td>Garázs típusa</td>
+                <td>Férőhely</td>
+                <td>Eladás</td>
+            </tr>
+        </thead>
+        <tbody>
+            {# Purchased slots - only show if > 0 #}
+            {% for ps in purchased_slots %}
+            <tr class="purchased">
+                <td class="text-left">Ingatlan nélküli garázs</td>
+                <td>{{ ps.slots }}</td>
+                <td>
+                    <a href="#" class="sell-link" 
+                       hx-get="/garazs/bovites/eladas/confirm" 
+                       hx-vals='{"country": "{{ ps.country }}"}'
+                       hx-target="#sell-modal-body"
+                       onclick="document.getElementById('sell-modal').style.display='block'">
+                        Eladás
+                    </a> (${{ ps.calculated_sell_price|number_format(0, '.', ',') }})
+                </td>
+            </tr>
+            {% endfor %}
+
+            {# Property garages #}
+            {% for pg in property_garages %}
+            <tr class="property">
+                <td class="text-left">Ingatlanhoz járó garázs ({{ pg.country_code }})</td>
+                <td>{{ pg.capacity }}</td>
+                <td>
+                    <a href="/otthon" hx-get="/otthon" hx-target="#game-content">Otthon/Ingatlanok</a>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {# If no garages at all #}
+            {% if purchased_slots|length == 0 and property_garages|length == 0 %}
+            <tr class="empty">
+                <td colspan="3" class="empty-msg">
+                    Nincs garázsod! Vásárolj alább, vagy szerezz ingatlant garázzsal.
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="content-header-dark" class="mt-20">
+        Ingatlan nélküli garázs bővítése
+    </div>
+
+    <table class="buy-table">
+        <thead>
+            <tr>
+                <td>Férőhely</td>
+                <td>Ár</td>
+                <td>Vétel</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for package in packages %}
+            <tr {% if package.is_purchased %}style="background-color: #f0f0f0; color: #888;"{% endif %}>
+                <td>+{{ package.slots }}</td>
+                <td>${{ package.price|number_format(0, '.', ',') }}</td>
+                <td>
+                    {% if package.is_purchased %}
+                        <button disabled style="background-color: #ccc; border: 1px solid #999; cursor: not-allowed; padding: 5px 10px;">
+                            Megvéve
+                        </button>
+                    {% else %}
+                        {# [2026-02-28] FIX: CSRF token + dupla kattintás védelem #}
+                        <form hx-post="/garazs/bovites/vasarlas" hx-target="#game-content">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="slots" value="{{ package.slots }}">
+                            <button type="submit" style="cursor: pointer; padding: 5px 10px; font-weight: bold;" hx-disabled-elt="this">
+                                Bővítem
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="back-link">
+        <a href="/garazs" hx-get="/garazs" hx-target="#game-content">Vissza a járműveidhez</a>
+    </div>
+
+</div>
+
+<!-- Sell Confirmation Modal -->
+<div id="sell-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: relative; width: 400px; margin: 150px auto; background: #fff; border: 2px solid #000; padding: 0;">
+        <div style="text-align: right; background: #000; padding: 2px;">
+            <span style="color: #fff; cursor: pointer; padding: 0 5px; font-weight: bold;" onclick="document.getElementById('sell-modal').style.display='none'">X</span>
+        </div>
+        <div id="sell-modal-body" style="padding: 10px;">
+            <!-- Content loaded via HTMX -->
+            Betöltés...
+        </div>
+    </div>
+</div>
+{% endblock %}

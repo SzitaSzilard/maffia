@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Szerverhiba | NetMafia</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            border: 2px solid #8B0000;
+            max-width: 600px;
+        }
+        .error-code {
+            font-size: 100px;
+            color: #8B0000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 0;
+        }
+        .error-title {
+            color: #aa0000;
+            font-family: 'Impact', sans-serif;
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        .debug-info {
+            background: #2a2a2a;
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            text-transform: uppercase;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: linear-gradient(to bottom, #aa0000, #880000);
+            color: white;
+            border: 2px solid #660000;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">💥 500</div>
+        
+        <h1 class="error-title">Valami NAGYON elromlott!</h1>
+        
+        <p class="error-message">
+            A szerver éppen bajban van. A főnök már dolgozik a megoldáson! 🔧
+        </p>
+
+        {% if debug and message %}
+        <div class="debug-info">
+            <strong style="color: #fff;">Hiba:</strong><br>
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <div>
+            <a href="/game" class="btn btn-primary">← Vissza a játékba</a>
+        </div>
+    </div>
+</body>
+</html>

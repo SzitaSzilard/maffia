@@ -1,0 +1,186 @@
+<style>
+    .listings-header {
+        background-color: #333 !important;
+        color: #eee !important;
+        text-align: center !important;
+        padding: 5px !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        border: 1px solid #000 !important;
+        border-bottom: none !important;
+        margin-top: 15px !important;
+    }
+    .listings-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        background-color: #eee !important;
+        color: #000 !important;
+        font-family: Arial, sans-serif !important;
+        font-size: 11px !important;
+        border: 1px solid #000 !important;
+    }
+    .listings-table thead {
+        background-color: #fff !important;
+    }
+    .listings-table th {
+        font-weight: bold !important;
+        padding: 4px 6px !important;
+        text-align: left !important;
+        border-bottom: 1px solid #999 !important;
+        border-right: 1px solid #999 !important;
+    }
+    .listings-table th:last-child {
+        border-right: none !important;
+    }
+    .listings-table td {
+        padding: 4px 6px !important;
+        border-right: 1px solid #999 !important;
+        border-bottom: 1px solid #ddd !important;
+    }
+    .listings-table td:last-child {
+        border-right: none !important;
+    }
+    .listings-table tr:last-child td {
+        border-bottom: none !important;
+    }
+    .btn-revoke {
+        background-color: #e0e0e0 !important;
+        border: 1px solid #999 !important;
+        color: #000 !important;
+        padding: 2px 6px !important;
+        cursor: pointer !important;
+        font-size: 11px !important;
+        font-family: Arial, sans-serif !important;
+    }
+    .btn-revoke:hover {
+        background-color: #ccc !important;
+    }
+    .empty-row {
+        text-align: center !important;
+        padding: 10px !important;
+        color: #555 !important;
+    }
+</style>
+
+<div id="market-user-listings-container" 
+     hx-get="/piac/eladasaid" 
+     hx-trigger="refreshUserListings from:body" 
+     hx-target="this" 
+     hx-swap="outerHTML">
+    <div id="alert-container"></div>
+
+<!-- ÁRUID TÁBLÁZAT -->
+<div class="listings-header">Áruid</div>
+<table class="listings-table">
+    <thead>
+        <tr>
+            <th>Kategória <i class="fa fa-sort"></i></th>
+            <th>Tárgy <i class="fa fa-sort"></i></th>
+            <th>Készlet <i class="fa fa-sort"></i></th>
+            <th>Darabár <i class="fa fa-sort"></i></th>
+            <th>Visszavonás</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if activeListings is empty %}
+            <tr><td colspan="5" class="empty-row">Nincs találat</td></tr>
+        {% else %}
+            {% for item in activeListings %}
+            <tr>
+                <td>{{ categories[item.category] | default(item.category) }}</td>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.quantity }} db</td>
+                <td>
+                    {% if item.currency == 'credit' %}
+                        {{ item.price|number_format(0, '.', ',') }} Kredit
+                    {% else %}
+                        ${{ item.price|number_format(0, '.', ',') }}
+                    {% endif %}
+                </td>
+                <td>
+                    <form hx-post="/piac/visszavon/{{ item.id }}" hx-target="#alert-container" hx-swap="innerHTML" style="margin: 0 !important;">
+                        {{ csrf.keys|raw }}
+                        <button type="submit" class="btn-revoke" hx-disabled-elt="this">Visszavon</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- ELADÁSAID TÁBLÁZAT -->
+<div class="listings-header">Eladásaid (Utolsó 30)</div>
+<table class="listings-table">
+    <thead>
+        <tr>
+            <th>Kategória <i class="fa fa-sort"></i></th>
+            <th>Tárgy <i class="fa fa-sort"></i></th>
+            <th>Vevő <i class="fa fa-sort"></i></th>
+            <th>Darab<i class="fa fa-sort"></i></th>
+            <th>Összeg <i class="fa fa-sort"></i></th>
+            <th>Dátum <i class="fa fa-sort"></i></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if recentSales is empty %}
+            <tr><td colspan="6" class="empty-row">Nincs találat</td></tr>
+        {% else %}
+            {% for sale in recentSales %}
+            <tr>
+                <td>{{ categories[sale.category] | default(sale.category) }}</td>
+                <td>{{ sale.item_name }}</td>
+                <td><a href="/profil/{{ sale.other_party }}" style="color:#333;text-decoration:none;">{{ sale.other_party }}</a></td>
+                <td>{{ sale.quantity }}</td>
+                <td>
+                    {% if sale.currency == 'credit' %}
+                        {{ (sale.price * sale.quantity)|number_format(0, '.', ',') }} Kredit
+                    {% else %}
+                        ${{ (sale.price * sale.quantity)|number_format(0, '.', ',') }}
+                    {% endif %}
+                </td>
+                <td>{{ sale.sold_at|date('Y-m-d H:i') }}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- VÉTELEID TÁBLÁZAT -->
+<div class="listings-header">Vételeid (Utolsó 30)</div>
+<table class="listings-table">
+    <thead>
+        <tr>
+            <th>Kategória <i class="fa fa-sort"></i></th>
+            <th>Tárgy <i class="fa fa-sort"></i></th>
+            <th>Eladó <i class="fa fa-sort"></i></th>
+            <th>Darab<i class="fa fa-sort"></i></th>
+            <th>Összeg <i class="fa fa-sort"></i></th>
+            <th>Dátum <i class="fa fa-sort"></i></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if recentPurchases is empty %}
+            <tr><td colspan="6" class="empty-row">Nincs találat</td></tr>
+        {% else %}
+            {% for purchase in recentPurchases %}
+            <tr>
+                <td>{{ categories[purchase.category] | default(purchase.category) }}</td>
+                <td>{{ purchase.item_name }}</td>
+                <td><a href="/profil/{{ purchase.other_party }}" style="color:#333;text-decoration:none;">{{ purchase.other_party }}</a></td>
+                <td>{{ purchase.quantity }}</td>
+                <td>
+                    {% if purchase.currency == 'credit' %}
+                        {{ (purchase.price * purchase.quantity)|number_format(0, '.', ',') }} Kredit
+                    {% else %}
+                        ${{ (purchase.price * purchase.quantity)|number_format(0, '.', ',') }}
+                    {% endif %}
+                </td>
+                <td>{{ purchase.sold_at|date('Y-m-d H:i') }}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
+</div>
+

@@ -1,0 +1,221 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<div style="width: 100%; margin: 0 auto; padding-top: 10px; font-family: Arial, sans-serif; font-size: 11px; color: #333;">
+
+    {# Fejléc #}
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; background: #ddd;">
+        <tr>
+            <td style="text-align: center; padding: 6px; font-weight: bold; font-size: 15px; color: #333; border-bottom: 1px solid #999;">
+                {{ topic.title }}
+            </td>
+        </tr>
+    </table>
+
+    {# Breadcrumb #}
+    <div style="padding: 4px 8px; font-size: 11px; color: #888; background: #f0f0f0; border: 1px solid #999; border-top: 0;">
+        <a href="#" hx-get="/forum" hx-target="#game-content" hx-push-url="true" style="color: #666; text-decoration: underline;">Fórum</a>
+        &raquo;
+        <a href="#" hx-get="/forum/kategoria/{{ topic.category_id }}" hx-target="#game-content" hx-push-url="true" style="color: #666; text-decoration: underline;">{{ topic.category_name }}</a>
+        &raquo; {{ topic.title }}
+    </div>
+
+    {# Lapozás (felül) #}
+    {% if totalPages > 1 %}
+    <div style="text-align: center; padding: 6px; font-size: 12px; color: #666; background: #eee; border: 1px solid #999; border-top: 0;">
+        {% if currentPage > 1 %}
+            <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ currentPage - 1 }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline;">&laquo; Előző</a>
+        {% endif %}
+
+        {% for p in 1..totalPages %}
+            {% if p == currentPage %}
+                <strong style="color: #333; margin: 0 2px;">{{ p }}</strong>
+            {% elseif p <= 3 or p > totalPages - 3 or (p >= currentPage - 2 and p <= currentPage + 2) %}
+                <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ p }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline; margin: 0 2px;">{{ p }}</a>
+            {% elseif p == 4 or p == totalPages - 3 %}
+                ...
+            {% endif %}
+        {% endfor %}
+
+        {% if currentPage < totalPages %}
+            <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ currentPage + 1 }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline;">Következő &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Új üzenet gomb (felül, jobb oldal) #}
+    {% if canPost %}
+    <div style="text-align: right; padding: 4px 0;">
+        <a href="#new-post-form" style="font-size: 12px; color: #555; text-decoration: underline;">Új üzenet</a>
+    </div>
+    {% endif %}
+
+    {# Admin: topic szerkesztés #}
+    {% if user.is_admin %}
+    <div style="text-align: right; padding: 4px 8px; font-size: 10px; background: #f0f0f0; border: 1px solid #999; border-top: 0;">
+        <a href="#" style="color: #888; text-decoration: underline;" onclick="var f=document.getElementById('topic-admin-edit'); f.style.display=f.style.display==='none'?'block':'none'; return false;">✏️ topic szerkesztés</a>
+        &nbsp;|&nbsp;
+        <a href="#" style="color: #c00; text-decoration: underline;" onclick="showDeleteModal('Biztosan törlöd ezt a topicot?', 'topic-admin-del'); return false;">🗑️ topic törlés</a>
+        <form id="topic-admin-del" hx-post="/forum/admin/topic-torles" hx-swap="innerHTML" style="display:none;">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="id" value="{{ topic.id }}">
+        </form>
+    </div>
+    <div id="topic-admin-edit" style="display: none; padding: 6px; background: #fff; border: 1px solid #ccc; margin-bottom: 4px;">
+        <form hx-post="/forum/admin/topic-szerkesztes" hx-swap="innerHTML">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="id" value="{{ topic.id }}">
+            <input type="text" name="title" value="{{ topic.title }}" style="width: 100%; padding: 3px; border: 1px solid #999; font-size: 12px; margin-bottom: 4px;">
+            <label style="font-size: 11px;"><input type="checkbox" name="is_locked" value="1" {{ topic.is_locked ? 'checked' : '' }}> Zárt</label>
+            <label style="font-size: 11px; margin-left: 8px;"><input type="checkbox" name="is_pinned" value="1" {{ topic.is_pinned ? 'checked' : '' }}> Kitűzött</label>
+            <button type="submit" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" hx-disabled-elt="this">Mentés</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {# Hozzászólások #}
+    {% for post in posts %}
+    {% if post.is_admin %}
+        {# ADMIN POST STYLING #}
+        <div style="border: 1px solid #000; margin-bottom: 8px; background: #cecece;">
+            <div style="padding: 4px 8px; font-size: 11px; color: #555; background: #fff; border-bottom: 1px solid #000;">
+                Kiírta: <strong style="color: #003366;">{{ post.username }}</strong>
+                Idő: {{ post.created_at }}
+                {% if user.is_admin %}
+                    <span style="float: right; font-size: 10px;">
+                        <a href="#" style="color: #888; text-decoration: none;" onclick="var f=document.getElementById('post-edit-{{ post.id }}'); f.style.display=f.style.display==='none'?'block':'none'; return false;">✏️</a>
+                        &nbsp;
+                        <a href="#" style="color: #c00; text-decoration: none;" onclick="showDeleteModal('Biztosan törlöd ezt a hozzászólást?', 'post-del-{{ post.id }}'); return false;">🗑️</a>
+                        <form id="post-del-{{ post.id }}" hx-post="/forum/admin/poszt-torles" hx-swap="innerHTML" style="display:none;">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="id" value="{{ post.id }}">
+                            <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                        </form>
+                    </span>
+                {% endif %}
+            </div>
+            <div style="padding: 10px; font-size: 12px; color: #1c3d5a; font-weight: bold; word-wrap: break-word; white-space: pre-wrap; font-family: Verdana, Arial, sans-serif; line-height: 1.4;">{{ post.content }}</div>
+            
+            {% if user.is_admin %}
+            <div id="post-edit-{{ post.id }}" style="display: none; padding: 6px; border-top: 1px solid #000; background: #fff;">
+                <form hx-post="/forum/admin/poszt-szerkesztes" hx-swap="innerHTML">
+                    {{ csrf.keys|raw }}
+                    <input type="hidden" name="id" value="{{ post.id }}">
+                    <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                    <textarea name="content" rows="3" style="width: 100%; padding: 4px; border: 1px solid #999; font-size: 12px; resize: vertical;">{{ post.content }}</textarea>
+                    <button type="submit" style="font-size: 11px; padding: 2px 8px; margin-top: 4px;" hx-disabled-elt="this">Mentés</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    {% else %}
+        {# NORMAL POST STYLING #}
+        <div style="border: 1px solid #999; margin-bottom: 8px; background: {{ loop.index is odd ? '#f5f5f5' : '#eaeaea' }};">
+            <div style="padding: 4px 8px; font-size: 11px; color: #888; border-bottom: 1px solid #ccc; background: #ddd;">
+                Kiírta: <strong style="color: #555;">{{ post.username }}</strong>
+                Idő: {{ post.created_at }}
+                {% if user.is_admin %}
+                    <span style="float: right; font-size: 10px;">
+                        <a href="#" style="color: #888; text-decoration: none;" onclick="var f=document.getElementById('post-edit-{{ post.id }}'); f.style.display=f.style.display==='none'?'block':'none'; return false;">✏️</a>
+                        &nbsp;
+                        <a href="#" style="color: #c00; text-decoration: none;" onclick="showDeleteModal('Biztosan törlöd ezt a hozzászólást?', 'post-del-{{ post.id }}'); return false;">🗑️</a>
+                        <form id="post-del-{{ post.id }}" hx-post="/forum/admin/poszt-torles" hx-swap="innerHTML" style="display:none;">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="id" value="{{ post.id }}">
+                            <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                        </form>
+                    </span>
+                {% endif %}
+            </div>
+            <div style="padding: 8px; font-size: 13px; color: #333; word-wrap: break-word; white-space: pre-wrap;">{{ post.content }}</div>
+            {% if user.is_admin %}
+            <div id="post-edit-{{ post.id }}" style="display: none; padding: 6px; border-top: 1px solid #ccc; background: #fff;">
+                <form hx-post="/forum/admin/poszt-szerkesztes" hx-swap="innerHTML">
+                    {{ csrf.keys|raw }}
+                    <input type="hidden" name="id" value="{{ post.id }}">
+                    <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                    <textarea name="content" rows="3" style="width: 100%; padding: 4px; border: 1px solid #999; font-size: 12px; resize: vertical;">{{ post.content }}</textarea>
+                    <button type="submit" style="font-size: 11px; padding: 2px 8px; margin-top: 4px;" hx-disabled-elt="this">Mentés</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    <div style="padding: 15px; text-align: center; border: 1px solid #999; color: #999; font-size: 13px;">
+        Még nincs hozzászólás.
+    </div>
+    {% endfor %}
+
+    {# Lapozás (alul) #}
+    {% if totalPages > 1 %}
+    <div style="text-align: center; padding: 6px; font-size: 12px; color: #666; background: #eee; border: 1px solid #999; border-top: 0;">
+        {% if currentPage > 1 %}
+            <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ currentPage - 1 }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline;">&laquo; Előző</a>
+        {% endif %}
+
+        {% for p in 1..totalPages %}
+            {% if p == currentPage %}
+                <strong style="color: #333; margin: 0 2px;">{{ p }}</strong>
+            {% elseif p <= 3 or p > totalPages - 3 or (p >= currentPage - 2 and p <= currentPage + 2) %}
+                <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ p }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline; margin: 0 2px;">{{ p }}</a>
+            {% elseif p == 4 or p == totalPages - 3 %}
+                ...
+            {% endif %}
+        {% endfor %}
+
+        {% if currentPage < totalPages %}
+            <a href="#" hx-get="/forum/topic/{{ topic.id }}?page={{ currentPage + 1 }}" hx-target="#game-content" hx-push-url="true" style="color: #555; text-decoration: underline;">Következő &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Új hozzászólás form #}
+    {% if canPost %}
+    <div id="new-post-form" style="margin-top: 10px; border: 1px solid #999; background: #f5f5f5; padding: 10px;">
+        <div style="font-weight: bold; font-size: 13px; margin-bottom: 6px; color: #333;">Új üzenet</div>
+        <form hx-post="/forum/topic/{{ topic.id }}/valasz" hx-target="#post-alert" hx-swap="innerHTML">
+            {{ csrf.keys|raw }}
+            <textarea name="content" required rows="5" style="width: 100%; padding: 6px; border: 1px solid #999; border-radius: 2px; font-size: 13px; resize: vertical;"></textarea>
+            <div style="text-align: right; margin-top: 6px;">
+                <button type="submit" class="btn btn-sm btn-light border border-secondary" style="font-size: 12px; padding: 3px 16px; border-radius: 2px;" hx-disabled-elt="this">Mehet</button>
+            </div>
+        </form>
+        <div id="post-alert"></div>
+    </div>
+    {% else %}
+        {% if topic.is_locked %}
+        <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; border: 1px solid #999; background: #f5f5f5; margin-top: 10px;">
+            🔒 Ez a topic le van zárva.
+        </div>
+        {% elseif topic.category_is_closed %}
+        <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; border: 1px solid #999; background: #f5f5f5; margin-top: 10px;">
+            🔒 Ez a kategória zárt, csak adminisztrátor írhat bele.
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {# Általános törlés modal #}
+    <div id="delete-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-box" style="text-align: center; max-width: 400px; width: 90%;">
+            <div class="modal-title" style="margin-bottom: 10px; font-weight: bold; font-size: 14px;">🗑️ Törlés megerősítése</div>
+            <div id="delete-modal-text" style="color: #555; margin-bottom: 20px; font-size: 13px;"></div>
+            <div>
+                <button type="button" id="delete-modal-confirm" class="btn btn-sm btn-light border border-secondary" style="margin-right: 10px; color: #c00;">✓ Törlés</button>
+                <button type="button" onclick="document.getElementById('delete-modal').style.display='none'" class="btn btn-sm btn-light border border-secondary">✕ Mégse</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDeleteModal(msg, formId) {
+            document.getElementById('delete-modal-text').innerText = msg;
+            document.getElementById('delete-modal-confirm').onclick = function() {
+                document.getElementById('delete-modal').style.display = 'none';
+                document.getElementById(formId).requestSubmit();
+            };
+            document.getElementById('delete-modal').style.display = 'flex';
+        }
+    </script>
+
+</div>
+{% endblock %}

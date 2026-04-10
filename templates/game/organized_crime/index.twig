@@ -1,0 +1,299 @@
+{% extends is_ajax ? 'layouts/ajax.twig' : 'layouts/base_game.twig' %}
+
+{% block title %}Szervezett Bűnözés{% endblock %}
+
+{% block content %}
+<style>
+/* Kifejezett KSZB (Kaszinó Kirablás) Egyedi Stílusai */
+.kszb-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+/* .kszb-tab styles now handled by global .game-tab in style.css */
+.kszb-container {
+    background-color: #eaeaea;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.kszb-header-container {
+    border: 1px solid #666;
+    background-color: #333;
+    padding: 0;
+    margin-bottom: 20px;
+}
+.kszb-title-bar {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+}
+.kszb-image-container img {
+    width: 100%;
+    display: block;
+    border-bottom: 2px solid #555;
+}
+.kszb-desc-box {
+    background-color: #eee;
+    padding: 15px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+    border-top: 1px solid #fff;
+    text-align: justify;
+}
+.kszb-info-link {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #555;
+    text-decoration: underline;
+    cursor: pointer;
+}
+/* Szervezés Table */
+.kszb-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #eee;
+    border: 1px solid #666;
+}
+.kszb-table th {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #000;
+}
+.kszb-table td {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    vertical-align: middle;
+}
+.kszb-table td:first-child {
+    width: 35%;
+    font-size: 13px;
+    color: #222;
+}
+.kszb-input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #ccc;
+}
+.kszb-status-green { color: #28a745; font-style: italic; font-size: 11px; margin-top: 2px; }
+.kszb-status-red { color: #dc3545; font-style: italic; font-size: 11px; margin-top: 2px; }
+.kszb-status-gray { color: #666; font-style: italic; font-size: 11px; margin-top: 2px; }
+.kszb-btn {
+    background-color: #eee;
+    border: 1px solid #999;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+.kszb-btn:hover { background-color: #ddd; }
+.kszb-username-link { font-weight: bold; color: #333; text-decoration: underline; }
+
+/* Tooltip (Részletek) */
+.kszb-details-box {
+    display: none;
+    background-color: #fff;
+    border: 1px solid #999;
+    padding: 15px;
+    margin-top: 10px;
+    font-size: 12px;
+}
+.kszb-details-table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+.kszb-details-table th, .kszb-details-table td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    text-align: left;
+}
+</style>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="kszb-container">
+            
+            <div class="kszb-tabs">
+                <a href="#" class="game-tab">Pénzszállító kirablás</a>
+                <a href="#" class="game-tab">Bankrablás</a>
+                <a href="/szervezett-bunozes" class="game-tab active">Kaszinó kirablás</a>
+                <a href="#" class="game-tab">Börtön kiszabadítás</a>
+                <a href="#" class="game-tab">Adóhatóság megtámadása</a>
+            </div>
+
+            {% if is_admin or user_rank_index >= 5 %}
+            <div class="kszb-header-container">
+                <div class="kszb-title-bar">Szervezett bűnözés - Kaszinó kirablás</div>
+
+                <div class="kszb-desc-box">
+                    A kaszinó az a hely, ahol az emberek a pénzüket boldogan hagyják ott, főleg ha gazdag emberek estéjéről van szó, szinte biztos, hogy nagy bevétel lesz. Nagy a kockázat, itt senki nem hibázhat, ez a szervezett bűnözés sikeressége már 10 gengszteren múlik. Az alvilág kiemelkedő képzetségekkel rendelkező gengsztereire lesz szükség a különböző területekhez. Előkészületekben meg kell fenyegetnie a biztonsági őrök főnökét egy olyan embernek, aki mögött egy komoly banda áll, valamint kell egy szakszervezeti tag, aki könnyedén hozzájut a kaszinó tervrajzához. Az idő rövid a balhéra, a kaszinóban lévő beépített rendőröket csendesen kell leszerelnetek, majd blokkolni az összes széf védelmi pontot. Egy perc, ennyi időtök marad a blokkolás után az összes pénz bepakolására és a helyszínről való eltűnéshez. Kaszinóból kijutva már csak a sofőrökön és a járműveiken múlik, hogy milyen könnyen értek el a repülőtérig. Miután oda értetek a repülőtérre nincs más dolgotok mint bepakolni a több táska pénzt a magánrepülőbe, majd elindulni egy elterelő körútra több országon keresztül, végül pedig haza.
+                    
+                    <a class="kszb-info-link" onclick="document.getElementById('kszb-details').style.display = document.getElementById('kszb-details').style.display === 'none' ? 'block' : 'none';">Részletek</a>
+                    
+                    <div id="kszb-details" class="kszb-details-box">
+                        <strong>Nehézségek és pénz részesedések:</strong>
+                        <table class="kszb-details-table mb-10">
+                            <tr><th>Poszt</th><th>Nehézség</th><th>Részesedés</th></tr>
+                            <tr><td>Szervező</td><td>10</td><td>13%</td></tr>
+                            <tr><td>Bandafőnök</td><td>9</td><td>11%</td></tr>
+                            <tr><td>Szakszervezeti tag</td><td>9</td><td>11%</td></tr>
+                            <tr><td>Fegyveres</td><td>8</td><td>10%</td></tr>
+                            <tr><td>Hacker</td><td>8</td><td>10%</td></tr>
+                            <tr><td>Autósofőr</td><td>6</td><td>9%</td></tr>
+                            <tr><td>Repülőgép-vezető</td><td>3</td><td>7%</td></tr>
+                        </table>
+                        
+                        <strong>Követelmények:</strong>
+                        <ul style="padding-left: 20px; margin-top: 5px;">
+                            <li>Minden tag: min. Katona rang és legalább 20% energia</li>
+                            <li>Bandafőnök: banda bandafőnök ranggal</li>
+                            <li>Szakszervezeti tag: épület vagy kocsma bérleti jog</li>
+                            <li>Fegyveres: lőfegyver</li>
+                            <li>Hacker: számítógép</li>
+                            <li>Autósofőr: jármű legalább 40 L benzinnel</li>
+                            <li>Repülőgép-vezető: magánrepülő legalább 100 L üzemanyaggal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% if cooldown_remaining > 0 and not active_crime %}
+            {# COOLDOWN AKTÍV — form elrejtve, timer megjelenik #}
+            <div style="text-align:center; padding: 30px 20px; background: #f5f5f5; border: 1px solid #ccc; margin-top: 10px;">
+                <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 10px;">
+                    ⏳ Szervezett bűnözés — Várakozás
+                </div>
+                <div style="font-size: 13px; color: #555; margin-bottom: 15px;">
+                    A következő szervezett bűnözésig még várnod kell:
+                </div>
+                <div id="oc-cooldown-timer" style="font-size: 24px; font-weight: bold; color: #dc3545; letter-spacing: 1px;">
+                    Számítás...
+                </div>
+                <div style="font-size: 11px; color: #888; margin-top: 10px;">
+                    Az oldal automatikusan frissül, amikor lejár az idő.
+                </div>
+            </div>
+            <script>
+            (function() {
+                let targetTs = {{ cooldown_target }};
+                
+                function formatSidebar(secs) {
+                    var m = Math.floor(secs / 60);
+                    var s = secs % 60;
+                    var h = Math.floor(m / 60);
+                    m = m % 60;
+                    var f = '';
+                    if (h > 0) f += h + ':';
+                    f += (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                    return f;
+                }
+                
+                function syncSidebar(secs) {
+                    var sidebarItem = document.getElementById('oc-menu-item');
+                    if (!sidebarItem) return;
+                    sidebarItem.setAttribute('data-cooldown-timestamp', targetTs);
+                    var sidebarTimer = sidebarItem.querySelector('.cooldown-timer');
+                    if (sidebarTimer) {
+                        sidebarTimer.textContent = formatSidebar(secs);
+                    }
+                }
+                
+                function updateTimer() {
+                    const timerEl = document.getElementById('oc-cooldown-timer');
+                    if (!timerEl) return;
+                    
+                    let now = (window.NetMafia && typeof window.NetMafia.now === 'function')
+                              ? window.NetMafia.now() 
+                              : Math.floor(Date.now() / 1000);
+                    let remaining = targetTs - now;
+                    
+                    if (remaining <= 0) {
+                        timerEl.textContent = 'Indulhat!';
+                        timerEl.style.color = '#28a745';
+                        syncSidebar(0);
+                        setTimeout(() => window.location.reload(), 1000);
+                        return;
+                    }
+                    const m = Math.floor(remaining / 60);
+                    const s = remaining % 60;
+                    timerEl.textContent = m + ' perc ' + (s < 10 ? '0' : '') + s + ' másodperc';
+                    syncSidebar(remaining);
+                    window.ocTimer = setTimeout(updateTimer, 1000);
+                }
+                
+                // HTMX dupla betöltés védelem - megöljük a korábbi loopot
+                if (window.ocTimer) clearTimeout(window.ocTimer);
+                updateTimer();
+            })();
+            </script>
+
+            {% else %}
+            {# NINCS COOLDOWN — normál nézet #}
+            <div id="kszb-squad-container" hx-get="/szervezett-bunozes/csapat" hx-trigger="reloadSquad from:body">
+                {% include 'game/organized_crime/_squad.twig' %}
+            </div>
+
+            {% if active_crime and active_crime.pivot_status == 'invited' %}
+            <div class="kszb-details-box mt-10 mb-10 text-center" style="display:block; border-color:#dc3545;">
+                <h4 style="color:#dc3545;">Új meghívásod érkezett!</h4>
+                <p>Meghívtak egy Kaszinó kirablásba. Szeretnél részt venni benne?</p>
+                <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+                    <form hx-post="/szervezett-bunozes/elfogad" style="margin:0;">
+                        {{ csrf.keys|raw }}
+                        <input type="hidden" name="crime_id" value="{{ active_crime.id }}">
+                        <button type="submit" class="kszb-btn" style="background-color:#28a745; color:#fff; border-color:#1e7e34;" hx-disabled-elt="this">Elfogadás</button>
+                    </form>
+                    <form hx-post="/szervezett-bunozes/elutasit" style="margin:0;">
+                        {{ csrf.keys|raw }}
+                        <input type="hidden" name="crime_id" value="{{ active_crime.id }}">
+                        <button type="submit" class="kszb-btn" style="background-color:#dc3545; color:#fff; border-color:#bd2130;" hx-disabled-elt="this">Elutasítás</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% else %}
+                <div style="text-align: center; margin-top: 10px; font-family: Arial, sans-serif; font-size: 11px; color: #333;">
+                    A kaszinó kirablás szervezett bűnözéshez szükséges minimum rang: {{ required_rank_name }}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{# ============================================================
+   OOB SIDEBAR SZINKRON — HTMX betöltésnél frissíti
+   az #oc-menu-item data-cooldown-timestamp értékét.
+   ============================================================ #}
+{% if is_ajax %}
+<li id="oc-menu-item"
+    class="menu-item-with-tooltip"
+    data-cooldown-timestamp="{{ cooldown_target }}"
+    hx-swap-oob="true">
+    <a href="#" hx-get="/szervezett-bunozes" hx-target="#game-content" hx-push-url="true" class="{% if pending_oc_invites is defined and pending_oc_invites > 0 %}oc-menu-highlight{% endif %}">
+        Szervezett bűnözés
+        {% if cooldown_remaining > 0 %}
+            <svg title="Várakozási idő aktív" style="width: 14px; height: 14px; vertical-align: middle; margin-left: 5px; fill: #aaa;" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+            <div class="menu-tooltip">Újra próbálkozhatsz: <span class="cooldown-timer">--:--</span></div>
+        {% endif %}
+    </a>
+</li>
+{% endif %}
+{% endblock %}

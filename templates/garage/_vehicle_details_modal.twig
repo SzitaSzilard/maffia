@@ -1,0 +1,239 @@
+    {# [2026-02-28] FIX: CSRF token a modal összes hx-post kéréséhez #}
+    <div id="csrf-container" style="display:none;">{{ csrf.keys|raw }}</div>
+    {% if error %}
+        <div class="alert-error">
+            ❌ {{ error }}
+        </div>
+    {% endif %}
+    <div style="display: flex;">
+        <div style="width: 50%; padding-right: 5px; box-sizing: border-box;">
+            {% if vehicle.image_path %}
+                <img src="{{ vehicle.image_path }}" alt="{{ vehicle.name }}" style="width: 100%; border: 1px solid #ccc;">
+            {% else %}
+                <div style="width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; color: #aaa;">
+                    Nincs kép
+                </div>
+            {% endif %}
+        </div>
+        <div style="width: 50%; padding-left: 5px; box-sizing: border-box;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Gyártó</td>
+                    <td style="padding: 4px;">{{ vehicle.name }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Model</td>
+                    <td style="padding: 4px;">-</td>
+                </tr>
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Gyártmány</td>
+                    <td style="padding: 4px;">{{ vehicle.origin_country|default('-') }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Kategória</td>
+                    <td style="padding: 4px;">
+                    {% if vehicle.category == 'sport' %}Sport
+                    {% elseif vehicle.category == 'suv' %}Terepjáró
+                    {% elseif vehicle.category == 'motor' %}Motor
+                    {% elseif vehicle.category == 'luxury' %}Luxus
+                    {% elseif vehicle.category == 'muscle' %}Izomautó
+                    {% else %}Átlag
+                    {% endif %}
+                </td>
+                </tr>
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Jelölés</td>
+                    <td style="padding: 4px;">-</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Helye</td>
+                    <td style="padding: 4px;">
+                        {{ vehicle.country }} 
+                        {% if is_in_garage %}
+                            <span style="color: #080;">(garázs)</span>
+                        {% else %}
+                            <span style="color: #c00; font-weight: bold;">(utcán!)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Gyorsaság</td>
+                    <td style="padding: 4px;">{{ vehicle.speed }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Biztonság</td>
+                    <td style="padding: 4px;">{{ vehicle.safety }}</td>
+                </tr>
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Férőhely</td>
+                    <td style="padding: 4px;">2</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Törés</td>
+                    <td style="padding: 4px;">
+                        {{ vehicle.damage_percent }} %
+                        {% if vehicle.damage_percent > 0 %}
+                            <br>
+                            {% set repair_cost = vehicle.damage_percent * 120 %}
+                             <button hx-post="/garazs/vehicle/{{ vehicle.id }}/repair" 
+                                     hx-target="#modal-body"
+                                     hx-include="#csrf-container"
+                                     style="cursor: pointer; font-size: 10px; color: red; border: 1px solid red; background: #fff; padding: 2px 5px; margin-top: 2px;">
+                                Javítás (${{ repair_cost|number_format }})
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Benzin</td>
+                    <td style="padding: 4px;">{{ vehicle.fuel_amount }} L</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px; font-weight: bold;">Státusz</td>
+                    <td style="padding: 4px;">Nálad van</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 15px; background-color: #eee; padding: 5px;">
+    {% if error %}
+        <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    {# Check category: if premium -> NOT average #}
+    {% set is_average = vehicle.category not in ['sport', 'suv', 'motor', 'luxury', 'muscle'] %}
+
+    {% if not is_average %}
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; text-align: center; font-size: 10px;">
+            {% for type, data in tuning.parts %}
+                <div style="margin: 5px; width: 60px;">
+                    <div style="font-weight: bold;">{{ data.name }}</div>
+                    <div>{{ data.level }}/{{ data.max_level }}</div>
+                    {% if data.can_upgrade %}
+                        <button hx-post="/garazs/vehicle/{{ vehicle.id }}/tune" 
+                                hx-vals='{"part": "{{ type }}"}' 
+                                hx-target="#modal-body"
+                                hx-include="#csrf-container"
+                                style="cursor: pointer; font-size: 9px; padding: 1px 4px;">
+                            [+]
+                        </button>
+                    {% else %}
+                        <span style="color: #080;">MAX</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; font-size: 9px; margin-top: 5px;">
+            {% set first_tuning = tuning.parts|first %}
+            (Egy tuning ára: ${{ first_tuning.cost|number_format }}) | 
+            {% if tuning.full_tuning_cost > 0 %}
+                <button hx-post="/garazs/vehicle/{{ vehicle.id }}/tune" 
+                        hx-vals='{"part": "full"}' 
+                        hx-target="#modal-body"
+                        hx-include="#csrf-container"
+                        style="cursor: pointer; font-size: 10px; color: blue; text-decoration: underline; border: none; background: none; padding: 0;">
+                    Full tuning (${{ tuning.full_tuning_cost|number_format }})
+                </button>
+            {% else %}
+                <span style="color: green; font-weight: bold;">Full tuning: KÉSZ</span>
+            {% endif %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 10px; font-style: italic; color: #666;">
+            Ez a jármű (Átlag) nem tuningolható.
+        </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 5px; background-color: #e0e0e0; padding: 5px;">
+    <div style="display: flex; justify-content: space-around; text-align: center; font-size: 10px;">
+        {# Bulletproof Glass #}
+        <div>
+            Golyóálló üveg<br>($2,176)<br>
+            {% if vehicle.has_bulletproof_glass %}
+                <span style="color: #080; font-weight: bold;">Megvéve</span>
+            {% else %}
+                <a href="#" hx-post="/garazs/vehicle/{{ vehicle.id }}/security-upgrade" hx-vals='{"upgrade": "bulletproof_glass"}' hx-target="#modal-body" hx-include="#csrf-container">Megveszem</a>
+            {% endif %}
+        </div>
+        
+        {# Steel Body #}
+        <div>
+            Acéllemezes karosszéria<br>($2,584)<br>
+            {% if vehicle.has_steel_body %}
+                <span style="color: #080; font-weight: bold;">Megvéve</span>
+            {% else %}
+                <a href="#" hx-post="/garazs/vehicle/{{ vehicle.id }}/security-upgrade" hx-vals='{"upgrade": "steel_body"}' hx-target="#modal-body" hx-include="#csrf-container">Megveszem</a>
+            {% endif %}
+        </div>
+
+        {# Runflat Tires #}
+        <div>
+            Defekttűrő kerék<br>($1,428)<br>
+            {% if vehicle.has_runflat_tires %}
+                <span style="color: #080; font-weight: bold;">Megvéve</span>
+            {% else %}
+                <a href="#" hx-post="/garazs/vehicle/{{ vehicle.id }}/security-upgrade" hx-vals='{"upgrade": "runflat_tires"}' hx-target="#modal-body" hx-include="#csrf-container">Megveszem</a>
+            {% endif %}
+        </div>
+
+        {# Explosion Proof Tank #}
+        <div>
+            Robbanásbiztos tank<br>($1,700)<br>
+            {% if vehicle.has_explosion_proof_tank %}
+                <span style="color: #080; font-weight: bold;">Megvéve</span>
+            {% else %}
+                <a href="#" hx-post="/garazs/vehicle/{{ vehicle.id }}/security-upgrade" hx-vals='{"upgrade": "explosion_proof_tank"}' hx-target="#modal-body" hx-include="#csrf-container">Megveszem</a>
+            {% endif %}
+        </div>
+
+        {# Large Tank #}
+        <div>
+            140 literes tank<br>($680)<br>
+            {% if vehicle.has_large_tank %}
+                <span style="color: #080; font-weight: bold;">Megvéve</span>
+            {% else %}
+                <a href="#" hx-post="/garazs/vehicle/{{ vehicle.id }}/security-upgrade" hx-vals='{"upgrade": "large_tank"}' hx-target="#modal-body" hx-include="#csrf-container">Megveszem</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 15px; text-align: center;">
+    {% if is_in_garage %}
+        <button hx-post="/garazs/vehicle/{{ vehicle.id }}/move" hx-vals='{"target": "street"}' hx-target="#modal-body" hx-include="#csrf-container" class="btn">Garázsból kivesz</button>
+    {% else %}
+        <button hx-post="/garazs/vehicle/{{ vehicle.id }}/move" hx-vals='{"target": "garage"}' hx-target="#modal-body" hx-include="#csrf-container" class="btn">Garázsba betesz</button>
+    {% endif %}
+    
+    {# Define is_average again in this scope if needed, or rely on previous set if it persists (Twig scoping rules apply) #}
+    {% set is_average = vehicle.category not in ['sport', 'suv', 'motor', 'luxury', 'muscle'] %}
+    
+    {% if is_average %}
+        <button hx-get="/garazs/vehicle/{{ vehicle.id }}/quick-sell/confirm" 
+                hx-target="#modal-body"
+                class="btn" style="color: #d00;">Gyors eladás ($24,500)</button>
+    {% endif %}
+    <div style="margin-top: 5px;">
+        {% if vehicle.is_default %}
+            <button hx-post="/garazs/vehicle/{{ vehicle.id }}/unsetDefault" hx-target="#modal-body" hx-include="#csrf-container" class="btn">Eltesz</button>
+        {% else %}
+            <button hx-post="/garazs/vehicle/{{ vehicle.id }}/default" hx-target="#modal-body" hx-include="#csrf-container" class="btn">Alapértelmezettnek</button>
+        {% endif %}
+    </div>
+    
+    <div style="margin-top: 10px; font-size: 10px;">
+        (Az alapértelmezett járműveket a következő helyeken fogod használni: profil, küzdelem, örömlány, falopás, orvvadászat, emberrablás, gyakorlópálya, utazás.)
+    </div>
+    
+    <div class="mt-10">
+        Más országba küldés 
+        <select>
+            <option>Anglia</option>
+            <option>USA</option>
+        </select> 
+        <button>Mehet</button>
+    </div>
+</div>

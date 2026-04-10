@@ -1,0 +1,24 @@
+<div class="news-form-container">
+    <div class="content-header-dark" style="margin-top:0; margin-bottom:15px;">ÚJ HÍR LÉTREHOZÁSA</div>
+    {# [2026-02-28] FIX: CSRF token hozzáadva #}
+    <form hx-post="/game/news/create" hx-target="#news-container" hx-swap="outerHTML">
+        {{ csrf.keys|raw }}
+        <div class="mb-3">
+            <label for="topic">Téma</label>
+            <input type="text" class="form-control" id="topic" name="topic" value="Változások" placeholder="Pl. Hírek, Karbantartás..." required>
+        </div>
+        <div class="mb-3">
+            <label for="content">Tartalom (A dátum automatikusan generálódik)</label>
+            <textarea class="form-control" id="content" name="content" rows="6" placeholder="Ide írd a fejlesztéseket..." required></textarea>
+        </div>
+        <div class="d-flex justify-content-between" class="mt-10">
+            <button type="button" class="btn btn-secondary" hx-get="/game" hx-target="#news-container" hx-select="#news-container" hx-swap="outerHTML">
+                <i class="fas fa-times"></i> Mégse
+            </button>
+            <button type="submit" class="btn btn-success" hx-disabled-elt="this">
+                <i class="fas fa-save"></i> Mentés
+            </button>
+        </div>
+    </form>
+</div>
+

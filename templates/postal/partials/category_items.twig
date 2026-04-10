@@ -1,0 +1,95 @@
+{# HTMX partial: kategória tárgyai #}
+<fieldset class="postal-fieldset">
+    <legend>Feladni kívánt {{ category_name|lower }}</legend>
+
+    {% if category in ['money', 'credits', 'bullets'] %}
+        {# Pénz/kredit/töltény: mennyiség megadása #}
+        {% set available = items[0].available|default(0) %}
+        <form action="/posta/kosar/hozzaad" method="POST">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="category" value="{{ category }}">
+            <input type="hidden" name="item_name" value="{{ items[0].name|default('Ismeretlen') }}">
+            <input type="hidden" name="unit_price" value="0">
+
+            <label style="font-size:12px;">Elérhető: {{ available|number_format(0, ',', '.') }}</label><br>
+            <label style="font-size:12px;">Mennyiség: </label>
+            <input type="number" name="quantity" min="1" max="{{ available }}" value="1" 
+                   class="postal-select" style="width:100px;" required>
+            <button type="submit" class="postal-btn" hx-disabled-elt="this">Csomag hozzáadása</button>
+        </form>
+    {% elseif items|length == 0 %}
+        <p style="font-size:12px; color:#999; font-style:italic;">Nincs elérhető tétel ebben a kategóriában.</p>
+    {% else %}
+        <form id="postal-item-form" action="/posta/kosar/hozzaad" method="POST">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="category" value="{{ category }}">
+
+            {# 1. lépés: tárgy kiválasztás #}
+            <div id="postal-step-1">
+                <select name="item_id" class="postal-select" id="postal-item-select" required>
+                    {% for item in items %}
+                        {% if category == 'vehicle' %}
+                            <option value="{{ item.id }}" 
+                                    data-name="{{ item.name }}" 
+                                    data-price="{{ item.price|default(0) }}"
+                                    data-max="1">
+                                {{ item.name }} ({{ item.country }})
+                            </option>
+                        {% elseif category == 'building' %}
+                            <option value="{{ item.id }}" 
+                                    data-name="{{ item.name_hu }}" 
+                                    data-price="5000"
+                                    data-max="1">
+                                {{ item.name_hu }}
+                            </option>
+                        {% else %}
+                            <option value="{{ item.item_id }}" 
+                                    data-name="{{ item.name }}" 
+                                    data-price="{{ item.price|default(0) }}"
+                                    data-max="{{ item.quantity|default(1) }}">
+                                {{ item.name }} ({{ item.quantity|default(1) }} db)
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="button" class="postal-btn" onclick="showQuantityStep()">Tovább</button>
+            </div>
+
+            {# 2. lépés: mennyiség (JS-sel jelenik meg) #}
+            <div id="postal-step-2" style="display:none; margin-top:8px;">
+                <input type="hidden" name="item_name" id="postal-item-name-hidden">
+                <input type="hidden" name="unit_price" id="postal-unit-price-hidden">
+                <label style="font-size:12px;">Mennyiség: </label>
+                <select name="quantity" id="postal-qty-select" class="postal-select"></select>
+                <button type="submit" class="postal-btn" hx-disabled-elt="this">Csomag hozzáadása</button>
+            </div>
+        </form>
+    {% endif %}
+</fieldset>
+
+<script>
+function showQuantityStep() {
+    const select = document.getElementById('postal-item-select');
+    const option = select.options[select.selectedIndex];
+    const name = option.getAttribute('data-name');
+    const price = option.getAttribute('data-price');
+    const max = parseInt(option.getAttribute('data-max')) || 1;
+
+    document.getElementById('postal-item-name-hidden').value = name;
+    document.getElementById('postal-unit-price-hidden').value = price;
+
+    // Mennyiség dropdown
+    const qtySelect = document.getElementById('postal-qty-select');
+    qtySelect.innerHTML = '';
+    for (let i = 1; i <= max; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        qtySelect.appendChild(opt);
+    }
+
+    document.getElementById('postal-step-1').style.display = 'none';
+    document.getElementById('postal-step-2').style.display = 'block';
+}
+</script>
+

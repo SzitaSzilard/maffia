@@ -1,0 +1,479 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .highway-container {
+        border: 1px solid #000;
+        background: #e0e0e0;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        color: #000;
+        position: relative;
+        padding-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .highway-header {
+        background: #333;
+        color: #fff;
+        padding: 5px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .tabs {
+        display: flex;
+        justify-content: center;
+        background: #ccc;
+        padding: 5px 0;
+        border-bottom: 1px solid #999;
+    }
+    /* .tab-btn styles now handled by global .game-tab in style.css */
+    .main-image {
+        display: block;
+        width: 90%;
+        margin: 10px auto;
+        border: 5px solid #fff;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+    .vehicle-info {
+        text-align: center;
+        margin: 10px 0;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    .travel-form {
+        width: 90%;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #fff;
+        padding: 10px;
+    }
+    .country-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dotted #ccc;
+    }
+    .country-list-item:last-child {
+        border-bottom: none;
+    }
+    .flag-icon {
+        font-size: 18px; 
+    }
+    .travel-btn {
+        display: block;
+        margin: 20px auto 0;
+        padding: 5px 20px;
+        background: #ddd;
+        border: 1px solid #999;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .travel-btn:hover {
+        background: #ccc;
+    }
+    .footer-info {
+        text-align: center;
+        font-size: 11px;
+        font-style: italic;
+        margin-top: 15px;
+        color: #333;
+    }
+    .highway-alert {
+        background: #fcc;
+        color: #a00;
+        border: 1px solid #a00;
+        padding: 10px;
+        margin: 10px auto;
+        width: 90%;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    /* Custom Tooltip Styles */
+    .highway-tooltip-container {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+        cursor: help;
+        color: #000;
+    }
+
+    .highway-tooltip-container .highway-tooltip-text {
+        visibility: hidden;
+        width: 140px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 10;
+        bottom: 125%; /* Position above */
+        left: 50%;
+        margin-left: -70px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        border: 1px solid #fff;
+    }
+
+    .highway-tooltip-container .highway-tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent;
+    }
+
+    .highway-tooltip-container:hover .highway-tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+</style>
+
+<div class="highway-container">
+    <div class="tabs">
+        <a href="/epulet/autopalya?tab=car" class="game-tab {% if active_tab != 'airplane' %}active{% endif %}">Járművel</a>
+        <a href="/epulet/autopalya?tab=airplane" class="game-tab {% if active_tab == 'airplane' %}active{% endif %}">Repülővel</a>
+    </div>
+
+
+    {% if active_tab == 'airplane' %}
+        <!-- ==================== AIRPLANE TAB ==================== -->
+        <div class="highway-header">Utazás repülővel</div>
+
+        <img src="/images/airport.jpg" alt="Repülőtér" class="main-image" onerror="this.src='/images/highway.jpg';">
+
+        <div class="vehicle-info">
+            Magánrepülőd: {% if has_jet %}<span style="color:green;">Van (Alap várakozás: {{ (total_airplane_cooldown_minutes) }} perc)</span>{% else %}Nincs{% endif %}<br>
+            {% if airplane_cooldown_remaining > 0 %}
+                <span style="color:red;">Utazás utáni várakozási idő: <span id="airplane-cooldown-timer">
+                    {{ (airplane_cooldown_remaining / 3600)|round(0, 'floor') }} óra 
+                    {{ ((airplane_cooldown_remaining % 3600) / 60)|round(0, 'floor') }} perc 
+                    {{ airplane_cooldown_remaining % 60 }} másodperc
+                </span></span>
+            {% else %}
+                <span style="color:green;">Utazás utáni várakozási idő: 0 óra 0 perc 0 másodperc</span>
+            {% endif %}
+        </div>
+
+        <form action="/repulo/utaz" method="POST" class="travel-form" id="airplane-travel-form" hx-disabled-elt="button[type='submit']">
+            {{ csrf.keys | raw }}
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:10px; padding-bottom:5px;">
+                <span style="width:30px;">Ország</span>
+                <span style="flex:1;"></span>
+                <span style="width:80px; text-align:center;">Repülőjegy</span>
+                <span style="width:40px; text-align:center;">Zászló</span>
+            </div>
+
+            {% for opt in travel_options %}
+                <div class="country-list-item" style="border:none; padding:8px 0;">
+                    <div style="width:30px; text-align:center;">
+                        <input type="radio" name="target_country" value="{{ opt.code }}" 
+                               {% if user.money < opt.airplane_cost or airplane_cooldown_remaining > 0 %}disabled{% endif %}
+                               {% if loop.first and user.money >= opt.airplane_cost and airplane_cooldown_remaining <= 0 %}checked{% endif %}>
+                    </div>
+                    <div style="flex:1; font-weight:bold; padding-left:5px;">{{ opt.name }}</div>
+                    <div style="width:80px; text-align:center;">
+                        {% if opt.airplane_cost == 0 %}
+                            <span style="color:green;">Ingyenes</span>
+                        {% else %}
+                            ${{ opt.airplane_cost }}
+                        {% endif %}
+                    </div>
+                    <div style="width:40px; text-align:center;" class="flag-icon">
+                        <img src="{{ opt.flag_path }}" alt="{{ opt.code }}" style="border:1px solid #000; width:28px; height:auto; vertical-align:middle;">
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div style="text-align:center; margin-top:15px;">
+                {% if airplane_cooldown_remaining <= 0 %}
+                    <button type="submit" class="travel-btn">Utazás</button>
+                {% else %}
+                    <button type="button" class="travel-btn" disabled style="opacity:0.5; cursor:not-allowed;">Utazás</button>
+                {% endif %}
+            </div>
+        </form>
+
+        <div class="footer-info">
+            Vásárolj magánrepülőt vásárlás fül alatt, így ingyen utazhatsz,<br>
+            csak a repülőt kell tankolnod és várakoznod sem kell annyit.<br><br>
+            Az {{ user.country_name|default('amerikai') }} Repülőtér tulajdonosa: 
+            <strong style="text-decoration:underline;">{{ airport.owner_name|default('Állam') }}</strong>
+
+            {% if airport.owner_id == user.id %}
+                <div class="mt-10">
+                    <a href="/repulo/kezel" class="owner-panel-btn">Tulajdonosi Panel</a>
+                </div>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <!-- ==================== CAR TAB ==================== -->
+        <div class="highway-header">Utazás járművel</div>
+
+        <img src="/images/highway.jpg" alt="Autópálya" class="main-image">
+
+        {% if default_vehicle %}
+            <div class="vehicle-info">
+                {% if is_vehicle_here %}
+                    Alapértelmezett járműved: {{ default_vehicle.name }} (Benzin: {{ default_vehicle.current_fuel|default(100) }} L)
+                {% else %}
+                    <span class="highway-tooltip-container" style="color:red; cursor:not-allowed;">
+                        Alapértelmezett járműved: {{ default_vehicle.name }}
+                        <span class="highway-tooltip-text" style="width:200px; margin-left:-100px; bottom:140%;">
+                            Ez a jármű <strong>{{ default_vehicle.country }}</strong> országban van!<br>
+                            Nem utazhatsz vele innen.
+                        </span>
+                    </span>
+                    <br>
+                    <span style="font-size:11px; color:red;">(A jármű nincs ebben az országban!)</span>
+                {% endif %}
+
+                <br>
+                {% if cooldown_remaining > 0 %}
+                    <span style="color:red;">Utazás utáni várakozási idő: <span id="cooldown-timer">{{ (cooldown_remaining / 60)|round(0, 'floor') }} perc {{ cooldown_remaining % 60 }} másodperc</span></span>
+                {% else %}
+                    {% if is_vehicle_here %}
+                        <div style="margin-top:5px; font-size:11px; color:#aaa;">
+                        {% if cooldown_reduction_percent > 0 %}
+                            <span class="highway-tooltip-container">
+                                (Csökkentett várakozás: {{ total_cooldown_minutes }} perc)
+                                <span class="highway-tooltip-text">
+                                    <strong>Aktív hatás:</strong><br>
+                                    {{ buff_sources|map(s => s|e)|join('<br>')|raw }}
+                                </span>
+                            </span>
+                        {% else %}
+                            (Normál várakozás: {{ total_cooldown_minutes }} perc)
+                        {% endif %}
+                        </div>
+                        <span style="color:green;">Utazás engedélyezve</span>
+                    {% else %}
+                         <span style="color:red; font-weight:bold;">UTAZÁS TILTVA</span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <form action="/epulet/autopalya/utaz" method="POST" class="travel-form" id="highway-travel-form" hx-disabled-elt="button[type='submit']">
+                {{ csrf.keys | raw }}
+                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:5px; border-bottom:1px solid #000;">
+                    <span style="width:30px;"></span>
+                    <span style="flex:1;">Ország</span>
+                    <span style="width:60px; text-align:center;">L benzin</span>
+                    <span style="width:40px; text-align:center;">Zászló</span>
+                </div>
+
+                {% for opt in travel_options %}
+                    <div class="country-list-item">
+                        <div style="width:30px; text-align:center;">
+                            <input type="radio" name="target_country" value="{{ opt.code }}" 
+                                   {% if not opt.can_afford or cooldown_remaining > 0 or not is_vehicle_here %}disabled{% endif %}
+                                   {% if loop.first and opt.can_afford and cooldown_remaining <= 0 and is_vehicle_here %}checked{% endif %}>
+                        </div>
+                        <div style="flex:1; font-weight:bold;">{{ opt.name }}</div>
+                        <div style="width:60px; text-align:center;">{{ opt.fuel_cost }} L</div>
+                        <div style="width:40px; text-align:center;" class="flag-icon">
+                            <img src="{{ opt.flag_path }}" alt="{{ opt.code }}" style="width:24px; height:auto; vertical-align:middle;">
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if cooldown_remaining <= 0 and is_vehicle_here %}
+                    <button type="submit" class="travel-btn">Utazás</button>
+                {% else %}
+                    <button type="button" class="travel-btn" disabled style="opacity:0.5; cursor:not-allowed;">Utazás</button>
+                {% endif %}
+            </form>
+
+        {% else %}
+            <div class="highway-alert">
+                Járművel való utazáshoz szükség van egy beállított alapértelmezett járműre!
+            </div>
+        {% endif %}
+
+        <div class="footer-info">
+            {% if max_daily_usage > 10000 %}
+                Ma <strong>korlátlanul</strong> használhatod az autópályát ingyenesen.<br>
+            {% else %}
+                Ma még <strong>{{ max_daily_usage - daily_usage }}x</strong> használhatod az autópályát ingyenesen.<br>
+            {% endif %}
+            
+            {% if sticker_level > 0 and sticker_expiry and "now"|date("U") < sticker_expiry|date("U") %}
+                <div style="margin-top:5px; color:#060; font-weight:bold;">
+                    Aktív matrica: 
+                    {% if sticker_level == 1 %}7-es szint{% elseif sticker_level == 2 %}10-es szint{% elseif sticker_level == 3 %}Korlátlan{% endif %}
+                    (Lejárat: {{ sticker_expiry|date('Y.m.d H:i') }})
+                </div>
+            {% else %}
+                 <a href="#" hx-on:click="document.getElementById('sticker-modal').style.display='block';" style="text-decoration:underline; color:#005580;">Autópálya matrica vétel</a>
+            {% endif %}
+
+            <br><br>
+            Az {{ user.country_name|default('amerikai') }} Autópálya tulajdonosa: 
+            <strong style="text-decoration:underline;">{{ highway.owner_name|default('Állam') }}</strong>
+
+            {% if highway.owner_id == user.id %}
+                <div class="mt-10">
+                    <a href="/epulet/autopalya/kezel" class="owner-panel-btn">Tulajdonosi Panel</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sticker Purchase Modal -->
+        <div id="sticker-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999;">
+            <div style="background:#fff; width:90%; max-width:500px; margin:100px auto; border:1px solid #000; padding:0;">
+                <div style="background:#333; color:#fff; padding:10px; font-weight:bold; position:relative;">
+                    Autópálya matrica vétel
+                    <span hx-on:click="document.getElementById('sticker-modal').style.display='none';" style="position:absolute; right:10px; cursor:pointer;">X</span>
+                </div>
+                <div style="padding:15px;">
+                    <p style="text-align:center; font-style:italic; margin-bottom:15px;">
+                        {% if max_daily_usage > 10000 %}
+                            Ma <strong>korlátlanul</strong> használhatod az autópályát ingyenesen.
+                        {% else %}
+                            Ma még <strong>{{ max_daily_usage - daily_usage }}x</strong> használhatod az autópályát ingyenesen, vásárolj<br>
+                            autópálya matricát, hogy többet használhasd az autópályát.
+                        {% endif %}
+                    </p>
+
+                    <table style="width:100%; border-collapse:collapse; border:1px solid #000;">
+                        <tr style="background:#eee; text-align:left; font-weight:bold;">
+                            <td style="padding:5px; border:1px solid #000;">Napi utazási korlát</td>
+                            <td style="padding:5px; border:1px solid #000;">Időtartam, ár</td>
+                            <td style="padding:5px; border:1px solid #000;">Vétel</td>
+                        </tr>
+                        
+                        <!-- 7-es szint -->
+                        <tr>
+                            <td style="padding:5px; border:1px solid #000; font-weight:bold;">7</td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <select id="duration_1" style="width:100%;">
+                                    <option value="week">1 hetes - ${{ sticker_prices.level7_week|number_format(0,',','.') }}</option>
+                                    <option value="month">1 hónapos - ${{ sticker_prices.level7_month|number_format(0,',','.') }}</option>
+                                </select>
+                            </td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <form hx-post="/epulet/autopalya/matrica" hx-target="#game-content" hx-disabled-elt="button">
+                                    {{ csrf.keys | raw }}
+                                    <input type="hidden" name="sticker_level" value="1">
+                                    <input type="hidden" name="sticker_duration" id="form_duration_1" value="week"> <!-- Updated via JS -->
+                                    <button type="submit" hx-on:click="document.getElementById('form_duration_1').value = document.getElementById('duration_1').value;">Megveszem</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- 10-es szint -->
+                        <tr>
+                            <td style="padding:5px; border:1px solid #000; font-weight:bold;">10</td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <select id="duration_2" style="width:100%;">
+                                    <option value="week">1 hetes - ${{ sticker_prices.level10_week|number_format(0,',','.') }}</option>
+                                    <option value="month">1 hónapos - ${{ sticker_prices.level10_month|number_format(0,',','.') }}</option>
+                                </select>
+                            </td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <form hx-post="/epulet/autopalya/matrica" hx-target="#game-content" hx-disabled-elt="button">
+                                    {{ csrf.keys | raw }}
+                                    <input type="hidden" name="sticker_level" value="2">
+                                    <input type="hidden" name="sticker_duration" id="form_duration_2" value="week">
+                                    <button type="submit" hx-on:click="document.getElementById('form_duration_2').value = document.getElementById('duration_2').value;">Megveszem</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- Korlátlan -->
+                        <tr>
+                            <td style="padding:5px; border:1px solid #000; font-weight:bold;">Korlátlan</td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <select id="duration_3" style="width:100%;">
+                                    <option value="week">1 hetes - ${{ sticker_prices.unlimited_week|number_format(0,',','.') }}</option>
+                                    <option value="month">1 hónapos - ${{ sticker_prices.unlimited_month|number_format(0,',','.') }}</option>
+                                </select>
+                            </td>
+                            <td style="padding:5px; border:1px solid #000;">
+                                <form hx-post="/epulet/autopalya/matrica" hx-target="#game-content" hx-disabled-elt="button">
+                                    {{ csrf.keys | raw }}
+                                    <input type="hidden" name="sticker_level" value="3">
+                                    <input type="hidden" name="sticker_duration" id="form_duration_3" value="week">
+                                    <button type="submit" hx-on:click="document.getElementById('form_duration_3').value = document.getElementById('duration_3').value;">Megveszem</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    {% if active_tab == 'airplane' %}
+        {% if airplane_cooldown_remaining > 0 %}
+        (function() {
+            let targetTs = {{ airplane_cooldown_target }};
+            function updateTimer() {
+                const timerStats = document.getElementById('airplane-cooldown-timer');
+                if (!timerStats) return;
+                
+                let now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                          ? window.NetMafia.now() 
+                          : Math.floor(Date.now() / 1000);
+                let remaining = targetTs - now;
+                
+                if (remaining <= 0) {
+                    window.location.reload();
+                    return;
+                }
+                const h = Math.floor(remaining / 3600);
+                const m = Math.floor((remaining % 3600) / 60);
+                const s = remaining % 60;
+                timerStats.innerText = `${h} óra ${m} perc ${s} másodperc`;
+                window.highwayAirplaneTimer = setTimeout(updateTimer, 1000);
+            }
+            if (window.highwayAirplaneTimer) clearTimeout(window.highwayAirplaneTimer);
+            updateTimer();
+        })();
+        {% endif %}
+    {% else %}
+        {% if cooldown_remaining > 0 %}
+        (function() {
+            let targetTs = {{ cooldown_target }};
+            function updateTimer() {
+                const timerStats = document.getElementById('cooldown-timer');
+                if (!timerStats) return;
+                
+                let now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                          ? window.NetMafia.now() 
+                          : Math.floor(Date.now() / 1000);
+                let remaining = targetTs - now;
+                
+                if (remaining <= 0) {
+                    window.location.reload();
+                    return;
+                }
+                const m = Math.floor(remaining / 60);
+                const s = remaining % 60;
+                timerStats.innerText = `${m} perc ${s} másodperc`;
+                window.highwayCarTimer = setTimeout(updateTimer, 1000);
+            }
+            if (window.highwayCarTimer) clearTimeout(window.highwayCarTimer);
+            updateTimer();
+        })();
+        {% endif %}
+    {% endif %}
+</script>
+
+{% endblock %}

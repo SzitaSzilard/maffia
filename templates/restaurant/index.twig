@@ -1,0 +1,168 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .restaurant-container {
+        border: 1px solid #000;
+        background: #1a1a1a;
+        width: 394px; /* 10.8 cm */
+        height: 310px; /* 8.5 cm */
+        margin: 0 auto;
+        color: #ddd;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .rest-header {
+        background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 5px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .menu-item { display: none; height: 100%; }
+    .menu-item.active { display: flex; flex-direction: column; flex: 1; position: relative; }
+
+    .item-display {
+        flex: 1;
+        position: relative;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .item-image {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+    .item-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0,0,0,0.6);
+        padding: 5px;
+        color: #fff;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px #000;
+        border-bottom: 1px solid #444;
+        z-index: 2;
+    }
+
+    .consume-btn-container {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+    }
+
+    .consume-btn {
+        background: #222;
+        color: #fff;
+        border: 1px solid #555;
+        padding: 6px 15px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .consume-btn:hover {
+        background: #444;
+    }
+
+    .navigation-bar {
+        background: #dcdcdc;
+        padding: 5px;
+        text-align: center;
+        border-top: 1px solid #000;
+        flex-shrink: 0;
+    }
+    
+    .nav-link {
+        color: #333;
+        text-decoration: underline;
+        cursor: pointer;
+        margin: 0 10px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    .owner-footer {
+        text-align: center;
+        padding: 10px;
+        color: #000;
+        font-size: 11px;
+    }
+</style>
+
+<div class="p-10">
+
+    <div class="restaurant-container">
+        <!-- Header -->
+        <div class="rest-header">{{ restaurant.name_hu }}</div>
+
+        <!-- Items Carousel -->
+        {% for item in menu %}
+            <div class="menu-item {% if loop.first %}active{% endif %}" id="item-{{ loop.index0 }}" data-index="{{ loop.index0 }}">
+                <div class="item-display">
+                    <!-- Overlay Info -->
+                    <div class="item-overlay">
+                        <div style="font-size: 16px;">{{ item.name }}</div>
+                        <div style="font-size: 14px;">Ár: $\{{ item.price }} (Energia: {{ item.energy }})</div>
+                    </div>
+
+                    <!-- Image (Placeholder for now until images exist) -->
+                    <img src="/images/food_placeholder.jpg" class="item-image" alt="{{ item.name }}" style="background: #333;">
+
+                    <!-- Consume Button -->
+                    <div class="consume-btn-container">
+                        <form action="/etterem/fogyasztas" method="POST" hx-disabled-elt="button[type='submit']">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                            <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <button type="submit" class="consume-btn">Elfogyasztom</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if menu|length == 0 %}
+            <div class="text-center p-15">Az étterem jelenleg zárva tart (nincs menü).</div>
+        {% endif %}
+
+        <!-- Navigation -->
+        {% if menu|length > 0 %}
+            <div class="navigation-bar">
+                <span class="nav-link" hx-on:click="prevItem()">Előző</span>
+                <span class="nav-link" hx-on:click="nextItem()">Következő</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="owner-footer">
+        Tulajdonosa: 
+        <strong style="text-decoration:underline;">{{ restaurant.owner_name|default('Állam') }}</strong>
+        
+        {% if restaurant.owner_id == user.id %}
+            <div class="mt-10">
+                <a href="/etterem/kezeles" class="owner-panel-btn">Tulajdonosi Panel</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="/js/carousel.js"></script>
+{% endblock %}

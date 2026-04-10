@@ -1,0 +1,18 @@
+{% block content %}{% endblock %}
+
+{# OOB Swap - Title frissítése navigációkor #}
+<title hx-swap-oob="true">NetMafia - {{ page_title|default('Játék') }}</title>
+
+
+
+
+
+{# OOB Swap - CSRF Tokens frissítése #}
+{% if csrf is defined %}
+<meta id="csrf-name-key" name="csrf-name-key" content="{{ csrf.nameKey }}" hx-swap-oob="true">
+<meta id="csrf-name" name="csrf-name" content="{{ csrf.name }}" hx-swap-oob="true">
+<meta id="csrf-value-key" name="csrf-value-key" content="{{ csrf.valueKey }}" hx-swap-oob="true">
+<meta id="csrf-value" name="csrf-value" content="{{ csrf.value }}" hx-swap-oob="true">
+{% endif %}
+
+</content>

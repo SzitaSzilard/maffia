@@ -1,0 +1,87 @@
+{# Messages List (Inbox/Outbox) #}
+<style>
+@keyframes unread-fade {
+    0%   { box-shadow: inset 0 0 0 2px #cc0000, 0 0 6px rgba(204, 0, 0, 0.4); }
+    100% { box-shadow: none; }
+}
+.msg-unread {
+    box-shadow: inset 0 0 0 2px #cc0000, 0 0 6px rgba(204, 0, 0, 0.4);
+    animation: unread-fade 5s linear forwards;
+}
+</style>
+<form id="messages-form" method="post" action="/uzenetek/torles">
+    {{ csrf.keys|raw }}
+    <input type="hidden" name="type" value="{{ active_tab }}">
+
+    {# ACTION BUTTONS #}
+    <div class="card text-center p-5">
+        <button type="button" onclick="MessagesModule.showDeleteModal()" class="btn btn-submit">Kijelölt törlés</button>
+        |
+        <button type="button" onclick="MessagesModule.selectAll()" class="btn btn-submit">Összes kijelölés</button>
+    </div>
+
+    {# MESSAGE LIST #}
+    {% if messages is defined and messages|length > 0 %}
+        {% for msg in messages %}
+        <div class="message-item card{% if active_tab == 'inbox' and not msg.is_read %} msg-unread{% endif %}" data-message-id="{{ msg.id }}">
+
+            {# HEADER — dark bar #}
+            <div class="card-header" style="text-align: left;">
+                {% if active_tab == 'inbox' %}
+                    Kitől: <span class="text-gold">{{ msg.sender_name }}</span> - {{ msg.created_at|date('Y-m-d H:i:s') }}
+                {% else %}
+                    Kinek: <span class="text-gold">{{ msg.recipient_name }}</span> - {{ msg.created_at|date('Y-m-d H:i:s') }}
+                {% endif %}
+            </div>
+
+            {# CONTENT — light body #}
+            <div class="card-body">
+                {{ msg.body|length > 200 ? msg.body|slice(0, 200) ~ '...' : msg.body }}
+            </div>
+
+            {# FOOTER — checkbox and actions #}
+            <div class="card-footer flex-between">
+                <label style="cursor: pointer;">
+                    <input type="checkbox" name="message_ids[]" value="{{ msg.id }}"> Kijelölés
+                </label>
+                <span>
+                    <span class="text-muted">#{{ msg.id }}</span>
+                    {% if active_tab == 'inbox' %}
+                    | <a href="#" hx-get="/uzenetek/send?to={{ msg.sender_name|url_encode }}&subject={{ ('Re: ' ~ msg.subject)|url_encode }}"
+                         hx-target="#game-content" hx-push-url="true"
+                         class="text-bold" style="text-decoration: none; color: #333;">Válasz</a>
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card text-center p-15 text-muted">
+            {% if active_tab == 'inbox' %}
+                Nincsenek bejövő üzeneteid.
+            {% else %}
+                Nincsenek kimenő üzeneteid.
+            {% endif %}
+        </div>
+    {% endif %}
+
+</form>
+
+{# DELETE CONFIRMATION MODAL #}
+<div id="delete-modal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-title">🗑️ Üzenet törlése</div>
+        <div id="delete-modal-text" class="mb-20" style="color: #555;">
+            Biztosan törlöd a kijelölt <span id="delete-count" class="text-red text-bold">0</span> üzenetet?
+        </div>
+        <div>
+            <button type="button" onclick="MessagesModule.confirmDelete()" class="btn btn-danger" style="margin-right: 10px;">
+                ✓ Törlés
+            </button>
+            <button type="button" onclick="MessagesModule.hideDeleteModal()" class="btn btn-primary">
+                ✕ Mégse
+            </button>
+        </div>
+    </div>
+</div>

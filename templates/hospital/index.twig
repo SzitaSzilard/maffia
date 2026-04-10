@@ -1,0 +1,111 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .hospital-container {
+        border: 1px solid #111;
+        background-color: #f4f4f4;
+        width: 299px; /* 8.2 cm */
+        height: 380px; /* 10.4 cm */
+        margin: 0 auto;
+        color: #222;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+    }
+
+    .hosp-header {
+        background-color: #3b3b3b;
+        color: #e0e0e0;
+        padding: 5px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .hosp-image-container {
+        flex-shrink: 0;
+        height: 130px; 
+        border-bottom: 2px solid #333;
+        overflow: hidden;
+    }
+
+    .hosp-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: brightness(0.9);
+    }
+
+    .hosp-body {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .hosp-footer {
+        text-align: center;
+        padding: 8px;
+        font-size: 11px;
+        color: #000;
+        border-top: 1px dotted #ccc;
+        background-color: #e6e6e6;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="p-10">
+
+    <div class="hospital-container">
+        <div class="hosp-header">
+            Kórház ({{ hospital.country_name|default('USA') }})
+        </div>
+        
+        <div class="hosp-image-container">
+            <img src="/images/korhaz_bg.jpg" alt="Hospital" class="hosp-image">
+        </div>
+
+        <div class="hosp-body">
+            <h3 style="margin: 0 0 10px 0; font-size: 13px;" class="text-bold">Élet feltöltés:</h3>
+
+            <div class="mb-10 text-muted" style="font-size: 11px;">
+                Egy % élet: <span class="text-bold" style="color: #333;">{{ price_per_hp|number_format(0,',','.') }}$</span>
+            </div>
+
+            {% if missing_hp > 0 %}
+            <form action="/korhaz/gyogyitas" method="POST" hx-disabled-elt="button[type='submit']" style="margin: 0;">
+                 {{ csrf.keys|raw }}
+                 <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
+                <select name="amount" class="form-select mb-10" style="width: 100%; font-size: 12px; padding: 3px;">
+                    <option value="full">Teljes (+{{ missing_hp }}%) - ${{ total_cost|number_format(0,',','.') }}</option>
+                </select>
+                <div style="margin-top: 5px;">
+                    <button type="submit" class="btn btn-submit" style="font-size: 12px; padding: 5px 15px;">Feltöltés</button>
+                </div>
+            </form>
+            {% else %}
+                <div class="text-green text-bold p-10" style="font-size: 12px;">Teljesen egészséges vagy!</div>
+            {% endif %}
+        </div>
+
+        <div class="hosp-footer">
+            Tulajdonosa: 
+            <strong style="text-decoration:underline;">{{ hospital.owner_name|default('Állam') }}</strong>
+            
+            {% if is_owner %}
+                <div class="mt-5">
+                    <a href="/korhaz/kezeles" class="owner-panel-btn">Tulajdonosi Panel</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

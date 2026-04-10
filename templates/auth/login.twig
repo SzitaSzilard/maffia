@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMafia - Belépés (Mockup)</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* === LOGIN OLDAL EGYEDI HIBAKIÍRÁS ===
+           Elkülönítve a globális .alert-* osztályoktól (azok pozíció:fixed lebegő sávok).
+           Ezek inline, a form felett jelennek meg — pont mint a screenshoton. */
+        .login-hiba {
+            margin-bottom: 10px;
+            padding: 6px 10px;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: Verdana, sans-serif;
+            text-align: center;
+        }
+        .login-hiba--error {
+            color: #cc0000;
+            background-color: #fff0f0;
+            border: 1px solid #e09090;
+        }
+        .login-hiba--warning {
+            color: #7a5c00;
+            background-color: #fffbe6;
+            border: 1px solid #e0c060;
+        }
+    </style>
+</head>
+<body>
+
+<div class="fokontener">
+    <div class="login-doboz">
+        <div class="doboz-fejlec">
+            NetMafia Online Mafia Game
+        </div>
+
+        <div class="doboz-tartalom">
+            
+            {# === LOGIN EGYEDI HIBAKEZELÉS ===
+               Teljesen elkülönítve a globális flash rendszertől.
+               Az üzenet a _login_msg session kulcsból jön (FlashMiddleware nem érinti).
+               type='error'   → piros (hibás jelszó/felhasználónév)
+               type='warning' → sárga (brute force tiltás / bannolva)
+            #}
+            {% if login_msg is not null %}
+                {% if login_msg.type == 'error' %}
+                <div class="login-hiba login-hiba--error">
+                    {{ login_msg.message }}
+                </div>
+                {% elseif login_msg.type == 'warning' %}
+                <div class="login-hiba login-hiba--warning">
+                    ⚠️ {{ login_msg.message }}
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <p class="bevezeto-szoveg">
+                Szeretnél egy ilyen, vagy ennél sokkal jobb <span>Online Maffia Játékot</span>?<br>
+                Gyere próbáld ki, milyen a maffiózók élete, legyél te New York legnagyobb gengsztere...
+            </p>
+
+            <form action="/login" method="POST">
+                
+                {{ csrf.keys|raw }}
+
+                <div class="urlap-sor">
+                    <label for="nev">Felhasználónév:</label>
+                    <input type="text" id="nev" name="username" value="{{ last_username }}">
+                </div>
+
+                <div class="urlap-sor">
+                    <label for="jelszo">Jelszó:</label>
+                    <input type="password" id="jelszo" name="password">
+                </div>
+
+                <div class="gomb-tarolo">
+                    <button type="submit" hx-disabled-elt="this">Belépés</button>
+                </div>
+            </form>
+
+            <div style="font-size: 11px; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                <a href="/register" style="color: #d00; font-weight: bold; text-decoration: none;">Regisztráció</a> |
+                <a href="#" style="text-decoration: none; color: #555;">Elfelejtett jelszó</a> |
+                <a href="#" style="text-decoration: none; color: #555;">Rólunk</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="font-size: 10px; color: #666; margin-top: 5px;">
+        Kapcsolat: teszt@teszt.hu | ÁSZF(teszt)
+    </div>
+</div>
+
+</body>
+</html>
+

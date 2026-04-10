@@ -1,0 +1,119 @@
+{% extends layout %}
+
+{% block content %}
+<style>
+    .user-tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+    .user-tooltip .tooltip-text {
+        visibility: hidden;
+        width: 200px;
+        background-color: #222;
+        color: #fff;
+        text-align: left;
+        border-radius: 4px;
+        padding: 10px;
+        position: absolute;
+        z-index: 100;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+        border: 1px solid #555;
+        font-size: 11px;
+        font-weight: normal;
+        line-height: 1.4;
+    }
+    .user-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+    .tooltip-row { margin-bottom: 2px; }
+    .tooltip-label { color: #aaa; margin-right: 5px; }
+    .online-box {
+        background-color: #e6e6e6;
+        border: 1px solid #000;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        padding: 15px;
+        border-radius: 0 0 4px 4px;
+        text-align: center;
+        color: #000;
+    }
+    .online-inner {
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 15px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+    }
+    .online-header {
+        margin-bottom: 0;
+        border-bottom: 0;
+        border-radius: 4px 4px 0 0;
+    }
+    .legend-owner { color: #0000cc; font-weight: bold; }
+    .legend-mod { color: #cc0000; }
+    .legend-bouncer { color: #008800; }
+    .legend-union { color: #8B4513; }
+    .legend-supporter { color: #e67e22; }
+    .legend-friend { color: #cc0000; font-weight: bold; }
+</style>
+
+<div class="mb-20">
+    <div class="content-header-dark online-header">
+        Online Gengszterek ({{ online_count }})
+    </div>
+
+    <div class="online-box">
+        <div class="online-inner">
+            <div style="line-height: 1.8; font-size: 12px;">
+                {% for online_user in online_users %}
+                    <div class="user-tooltip">
+                        <span {% if online_user.is_admin %}class="legend-owner"{% endif %}>
+                            {% if online_user.country_code == user.country_code and online_user.id != user.id %}!{% endif %}
+                            <a href="#" hx-get="/{{ online_user.username }}" hx-target="#game-content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+                                {{ online_user.username }}
+                            </a>
+                        </span>
+                        {% if not loop.last %}, {% endif %}
+                        
+                        <div class="tooltip-text">
+                            <div class="tooltip-row"><span class="tooltip-label">Gengszter:</span> <span class="text-bold">{{ online_user.username }}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Rang:</span> {{ online_user.rank_name }}</div>
+                            <div class="tooltip-row"><span class="tooltip-label">Ország:</span> {{ online_user.country_name }}</div>
+                            <div class="tooltip-row"><span class="tooltip-label">Banda:</span> {{ online_user.gang_name }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <span class="text-muted" style="font-style: italic;">Jelenleg nincs más online játékos.</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAGYARÁZAT -->
+<div class="mb-20">
+    <div class="content-header-dark online-header">
+        Magyarázat
+    </div>
+    
+    <div class="online-box">
+        <div class="online-inner" style="font-size: 11px; line-height: 1.6;">
+            <div class="legend-owner">Kék - Tulajdonos</div>
+            <div class="legend-mod">Piros - Moderátor</div>
+            <div class="legend-bouncer">Zöld - Kocsma kidobó</div>
+            <div class="legend-union">Barna - Szakszervezeti tag</div>
+            <div class="legend-supporter">* - Támogató</div>
+            <div style="text-decoration: underline;">Aláhúzott - Vállalkozás tulaj</div>
+            <div class="text-bold">Vastag - Banda tulaj</div>
+            <div style="font-style: italic;">Dőlt - Banda tag</div>
+            <div>! - Azonos országban vagytok</div>
+            <div class="legend-friend">{} - Te barátod</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

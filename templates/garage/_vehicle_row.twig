@@ -1,0 +1,36 @@
+<tr id="vehicle-row-{{ vehicle.id }}" {% if is_oob is defined and is_oob %}hx-swap-oob="true"{% endif %}>
+    <td>
+        {% set premium = ['sport', 'suv', 'motor', 'luxury', 'muscle'] %}
+        {% if vehicle.category not in premium %}
+            <input type="checkbox" name="selected_vehicles[]" value="{{ vehicle.id }}" style="margin-right: 5px;">
+        {% endif %}
+        {{ vehicle.id }}
+    </td>
+    <td>
+        <a href="#" 
+           class="vehicle-link"
+           style="{{ vehicle.is_default ? 'color: red;' : 'color: black;' }}"
+           hx-get="/garazs/vehicle/{{ vehicle.id }}" 
+           hx-target="#modal-body" 
+           hx-trigger="click"
+           onclick="document.getElementById('vehicle-modal').style.display='block'; document.getElementById('modal-body').innerHTML='<div style=\'text-align:center; padding:20px;\'>Betöltés...</div>';">
+           {{ vehicle.name }}
+        </a>
+        {% if vehicle.is_default %}
+            <span class="default-marker">●</span>
+        {% endif %}
+    </td>
+    <td>{{ vehicle.damage_percent }}%</td>
+    <td>{{ vehicle.fuel_amount }} / {{ vehicle.max_fuel }} L</td>
+    <td>{{ vehicle.speed }}</td>
+    <td>{{ vehicle.safety }}</td>
+    <td>{{ vehicle.tuning_percent }}%</td>
+    <td>
+        {{ vehicle.country }} 
+        {% if vehicle.location == 'garage' %}
+            <span class="garage-label">garázs</span>
+        {% else %}
+            <span class="street-label">utcán!</span>
+        {% endif %}
+    </td>
+</tr>

@@ -1,0 +1,128 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .manage-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: #1a1a1a;
+        border: 1px solid #000;
+        color: #ddd;
+    }
+    
+    .manage-header {
+        background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .manage-body {
+        padding: 20px;
+        background: #222;
+    }
+    
+    .manage-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #fff;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    .manage-input {
+        padding: 6px;
+        width: 120px;
+        background: #111;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .manage-btn {
+        background: linear-gradient(to bottom, #bd362f, #a90329);
+        color: white;
+        border: 1px solid #800;
+        padding: 6px 15px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .manage-btn:hover {
+        background: #d00;
+        text-decoration: none;
+    }
+    
+    .manage-link {
+        color: #aaa;
+        font-size: 11px;
+        text-decoration: none;
+    }
+    .manage-link:hover { color: #fff; text-decoration: underline; }
+    
+    /* flash styling → global style.css (.alert-success / .alert-error) */
+</style>
+
+<div class="manage-container">
+    <div class="manage-header">Repülőtér Kezelése: {{ building.name_hu }} ({{ building.country_name }})</div>
+
+    <div class="manage-body">
+
+        <!-- Statisztika -->
+        <div style="margin-bottom: 20px; background: #111; padding: 10px; border: 1px solid #333;">
+            <div class="manage-stats-title">Statisztika</div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                <span style="color:#aaa;">Összes bevétel repülőjegyekből:</span>
+                <span style="color:#4f4; font-weight:bold;">${{ building.total_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <span style="color:#aaa;">Repülések száma:</span>
+                <span style="color:#ddd;">{{ building.total_uses|default(0)|number_format(0,',','.') }} alkalom</span>
+            </div>
+            {% if building.payout_mode != 'instant' %}
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:5px; padding-top:5px; border-top:1px dashed #333;">
+                <span style="color:#aaa;">Jelenlegi felhalmozott bevétel:</span>
+                <span style="color:#fc0; font-weight:bold;">${{ building.pending_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Globális Beállítások -->
+        <form action="/repulo/frissites" method="POST" style="margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 20px;">
+    {{ csrf.keys|raw }}
+            <input type="hidden" name="building_id" value="{{ building.id }}">
+            {{ csrf.keys | raw }}
+            
+            <div style="margin-bottom: 20px; font-size:12px; color:#aaa; font-style:italic;">
+                (A repülőjegyek árai és a tulajdonosi jutalék %-a nem módosíthatóak globális szinten, azok mindig a rendszer által megszabottak maradnak.)
+            </div>
+
+            <div class="mb-20">
+                <label class="manage-label">Kifizetés módja:</label>
+                <select name="payout_mode" class="manage-input" style="width: 100%;">
+                    <option value="instant" {% if building.payout_mode == 'instant' %}selected{% endif %}>Azonnali (Minden jegyvásárláskor)</option>
+                    <option value="daily" {% if building.payout_mode == 'daily' %}selected{% endif %}>Napi (Éjfélkor)</option>
+                    <option value="weekly" {% if building.payout_mode == 'weekly' %}selected{% endif %}>Heti (Vasárnap éjfélkor)</option>
+                </select>
+                <div class="manage-hint">Mikor kerüljön jóváírásra a számládon a beszedett pénz.</div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="manage-btn" hx-disabled-elt="this">BEÁLLÍTÁSOK MENTÉSE</button>
+            </div>
+        </form>
+        
+        <div class="manage-footer">
+             <a href="/epulet/autopalya?tab=airplane" class="manage-link">&laquo; Vissza a Repülőtérre</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,16 @@
+{% extends layout %}
+
+{% block content %}
+<div class="content-header-dark">FEJLESZTÉS ALATT</div>
+
+<div style="background: #fff; border: 1px solid #aaa; padding: 30px; text-align: center; border-radius: 4px;">
+    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+    <h3 style="color: #a00; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Ez a funkció még készül!</h3>
+    <p style="color: #555; line-height: 1.5;">
+        A <strong>NetMafia</strong> fejlesztői éppen ezen a <strong>"{{ module_name }}"</strong> modulon dolgoznak.<br>
+        Nézz vissza később, vagy igyál egyet a Kocsmában addig is!
+    </p>
+    <br>
+    <button class="btn" hx-get="/game" hx-target="#game-content" hx-push-url="true" style="background: #333; color: white; border: none; padding: 8px 15px; cursor: pointer;">Vissza a Főoldalra</button>
+</div>
+{% endblock %}

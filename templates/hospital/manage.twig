@@ -1,0 +1,162 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .manage-container {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #1a1a1a;
+        border: 1px solid #000;
+        color: #ddd;
+    }
+    
+    .manage-header {
+        background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .manage-body {
+        padding: 20px;
+        background: #222;
+    }
+    
+    .manage-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #fff;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    .manage-input {
+        padding: 6px;
+        width: 120px;
+        background: #111;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .manage-btn {
+        background: linear-gradient(to bottom, #bd362f, #a90329); /* Red gradient */
+        color: white;
+        border: 1px solid #800;
+        padding: 6px 15px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .manage-btn:hover {
+        background: #d00;
+        text-decoration: none;
+    }
+    
+    .manage-link {
+        color: #aaa;
+        font-size: 11px;
+        text-decoration: none;
+    }
+    .manage-link:hover { color: #fff; text-decoration: underline; }
+    .manage-stats {
+        margin-bottom: 20px;
+        background: #111;
+        padding: 10px;
+        border: 1px solid #333;
+    }
+    .manage-stats-title {
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+    }
+    .manage-stat-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    .manage-stat-row .stat-label { color: #aaa; }
+    .manage-stat-row .stat-value { font-weight: bold; }
+    .manage-stat-row .stat-value.text-green { color: #4f4; }
+    .manage-stat-row .stat-value.text-yellow { color: #fc0; }
+    .manage-hint {
+        font-size: 10px;
+        color: #888;
+        margin-top: 3px;
+    }
+    .manage-footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #333;
+        text-align: center;
+    }
+</style>
+
+<div class="manage-container">
+    <div class="manage-header">Kórház Kezelése</div>
+
+    <div class="manage-body">
+
+        <div class="manage-stats">
+            <div class="manage-stats-title">Statisztika</div>
+            <div class="manage-stat-row">
+                <span class="stat-label">Összes bevétel:</span>
+                <span class="stat-value text-green">${{ hospital.total_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            <div class="manage-stat-row">
+                <span class="stat-label">Látogatások száma:</span>
+                <span class="stat-value">{{ hospital.total_uses|default(0)|number_format(0,',','.') }} alkalom</span>
+            </div>
+            {% if hospital.payout_mode != 'instant' %}
+            <div class="manage-stat-row" style="margin-top:5px; padding-top:5px; border-top:1px dashed #333;">
+                <span class="stat-label">Jelenlegi felhalmozott bevétel:</span>
+                <span class="stat-value text-yellow">${{ hospital.pending_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <form action="/korhaz/kezeles" method="POST">
+             {{ csrf.keys|raw }}
+            
+            <div class="mb-20">
+                <label class="manage-label">Egy % élet ára ($):</label>
+                <div style="display:flex; align-items:center gap:5px;">
+                    <span style="font-weight:bold; color:#4f4;">$</span>
+                    <input type="number" name="price" value="{{ price }}" class="manage-input" min="1" required>
+                </div>
+                <div class="manage-hint">Az ár dollárban értendő %-onként.</div>
+            </div>
+
+
+
+            <div class="mb-20">
+                <label class="manage-label">Kifizetés módja:</label>
+                <select name="payout_mode" class="manage-input" style="width: 100%;">
+                    <option value="instant" {% if hospital.payout_mode == 'instant' %}selected{% endif %}>Azonnali (Minden gyógyításkor)</option>
+                    <option value="daily" {% if hospital.payout_mode == 'daily' %}selected{% endif %}>Napi (Éjfélkor)</option>
+                    <option value="weekly" {% if hospital.payout_mode == 'weekly' %}selected{% endif %}>Heti (Vasárnap éjfélkor)</option>
+                </select>
+                <div class="manage-hint">Mikor kerüljön jóváírásra a számládon.</div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="manage-btn" hx-disabled-elt="this">Mentés</button>
+            </div>
+        </form>
+        
+        <div class="manage-footer">
+            <a href="/korhaz" class="manage-link">&laquo; Vissza a Kórházba</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

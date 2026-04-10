@@ -1,0 +1,270 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .weed-container {
+        width: 416px; /* 11.4 cm */
+        height: 365px; /* 10.0 cm */
+        margin: 0 auto;
+        border: 1px solid #000;
+        background: #e0e0e0;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+    }
+
+    .weed-header {
+        background: #333;
+        color: #fff;
+        padding: 5px 10px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        flex-shrink: 0;
+    }
+
+    .weed-img-wrapper {
+        flex: 1; /* Nyeljen el minden maradék helyet */
+        min-height: 50px;
+        border-bottom: 1px solid #888;
+        overflow: hidden;
+    }
+
+    .weed-image {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        background: linear-gradient(to bottom, #1a3a1a, #2d5a2d);
+    }
+
+    .weed-action-row {
+        border-top: 1px solid #888;
+        padding: 4px 6px;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .weed-action-row select {
+        font-size: 12px;
+        padding: 2px 3px;
+        border: 1px solid #666;
+        background: #fff;
+        width: 60px;
+    }
+
+    .weed-btn {
+        font-size: 12px;
+        padding: 3px 14px;
+        border: 1px solid #666;
+        background: #d0d0d0;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .weed-btn:hover { background: #c0c0c0; }
+    .weed-btn:active { background: #b0b0b0; }
+
+    .weed-harvest-row {
+        border-top: 1px solid #888;
+        padding: 3px 5px;
+        background: #e0e0e0;
+        flex-shrink: 0;
+    }
+
+    .weed-btn-wide {
+        width: 100%;
+        text-align: left;
+        padding: 5px 8px;
+        border: 1px solid #666;
+        background: #d0d0d0;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .weed-btn-wide:hover { background: #c0c0c0; }
+
+    .weed-stats {
+        border-top: 1px solid #888;
+        padding: 5px 8px;
+        background: #e8e8e8;
+        font-size: 11px;
+        line-height: 1.5;
+        color: #222;
+        flex-shrink: 0;
+    }
+
+    .weed-stats p { margin: 0; }
+
+    .weed-stats .stat-label { color: #555; }
+    .weed-stats .stat-val { color: #000; font-weight: bold; }
+
+    .weed-note {
+        border-top: 1px solid #ccc;
+        margin-top: 4px;
+        padding-top: 4px;
+        font-style: italic;
+        color: #555;
+        font-size: 11px;
+    }
+
+    .cd-txt {
+        color: #cc5500;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .cd-row {
+        border-top: 1px solid #888;
+        padding: 4px 6px;
+        background: #e0e0e0;
+        color: #cc5500;
+        font-size: 11px;
+        flex-shrink: 0;
+    }
+</style>
+
+{% if not can_plant %}
+    <div style="text-align: center; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; color: #333;">
+        A vadkender ültetés használatához szükséges minimum rang: {{ required_rank_name }}
+    </div>
+{% else %}
+<div class="p-10">
+
+
+    <div class="weed-container">
+
+        <div class="weed-header">Vadkender Ültetvény</div>
+
+        <div class="weed-img-wrapper">
+            <img src="/images/weed_farm.jpg" class="weed-image" alt="Vadkender ültetvény"
+                 onerror="this.style.background='linear-gradient(to bottom, #1a3a1a, #2d5a2d)'; this.removeAttribute('src');">
+        </div>
+
+        {# ===== ÜLTETÉS ===== #}
+        {% if plant_cd > 0 %}
+            <div class="cd-row">
+                ⏳ Következő ültetésig: <span class="cooldown-timer" data-duration="{{ plant_cd }}" id="plant-timer">
+                    {{ (plant_cd / 3600)|round(0, 'floor') }}ó 
+                    {{ ((plant_cd % 3600) / 60)|round(0, 'floor') }}p
+                </span>
+            </div>
+        {% elseif total_seeds <= 0 %}
+            <div class="cd-row" style="color:#888;">
+                Nincs vadkendermagod. Szerezz egyet a Piacon!
+            </div>
+        {% elseif local_plantations >= max_plants %}
+            <div class="cd-row" style="color:#888;">
+                ⚠ Tele van az ültetvényed! (Max: {{ max_plants }} szál)
+            </div>
+        {% else %}
+            {% set szabad = max_plants - local_plantations %}
+            {% set max_now = szabad > total_seeds ? total_seeds : szabad %}
+            <form hx-post="/vadkender/ultet" hx-target="#game-content" hx-swap="innerHTML" style="margin:0;">
+                {{ csrf.keys|raw }}
+                <div class="weed-action-row">
+                    <select name="amount">
+                        {% for i in 1..max_now %}
+                            <option value="{{ i }}">{{ i }} db</option>
+                        {% endfor %}
+                    </select>
+                    <span>vadkendermag elültetése</span>
+                    <button type="submit" class="weed-btn" hx-disabled-elt="this">Mehet</button>
+                </div>
+            </form>
+        {% endif %}
+
+        {# ===== BETAKARÍTÁS ===== #}
+        {% if harvest_cd > 0 %}
+            <div class="cd-row">
+                ⏳ Következő betakarításig várnod kell: <span class="cooldown-timer" data-duration="{{ harvest_cd }}" id="harvest-timer">
+                    {{ (harvest_cd / 3600)|round(0, 'floor') }} óra 
+                    {{ ((harvest_cd % 3600) / 60)|round(0, 'floor') }} percet
+                </span>
+            </div>
+        {% elseif local_plantations > 0 %}
+            <div class="weed-harvest-row">
+                <form hx-post="/vadkender/szuret" hx-target="#game-content" hx-swap="innerHTML" style="margin:0;">
+                    {{ csrf.keys|raw }}
+                    <button type="submit" class="weed-btn-wide" hx-disabled-elt="this">
+                        Vadkender ültetvény(ek) betakarítása
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <div class="cd-row" style="color:#888;">
+                Nincs betakarítható ültetvény ebben az országban.
+            </div>
+        {% endif %}
+
+        {# ===== STATISZTIKÁK ===== #}
+        <div class="weed-stats">
+            <p>
+                <span class="stat-label">Összes vadkendermagod:</span>
+                <span class="stat-val">{{ total_seeds }}</span>
+            </p>
+            <p>
+                <span class="stat-label">Ültetvényed {{ country_name }}ban/ben:</span>
+                <span class="stat-val">{{ local_plantations }}</span>
+            </p>
+            <p>
+                <span class="stat-label">Összes ültetvényed (globális):</span>
+                <span class="stat-val">{{ global_plantations }}</span>
+            </p>
+            <p>
+                <span class="stat-label">{{ country_name }} átlag fű minősége:</span>
+                <span class="stat-val">{{ base_quality }}</span>
+            </p>
+            <p>
+                <span class="stat-label">Max ültetés országonként:</span>
+                <span class="stat-val">{{ max_plants }}</span>
+            </p>
+            <p class="weed-note">
+                Az elhasznált vadkendermagok automatikus törlésre kerülnek.
+            </p>
+        </div>
+
+    </div>
+{% endif %}
+</div>
+
+<script>
+(function() {
+    var timers = document.querySelectorAll('.cooldown-timer[data-duration]');
+    if (window._weedTimers) { window._weedTimers.forEach(function(id) { clearInterval(id); }); }
+    window._weedTimers = [];
+
+    timers.forEach(function(el) {
+        var remaining = parseInt(el.getAttribute('data-duration'), 10);
+        if (!remaining || remaining <= 0) return;
+
+        var id = setInterval(function() {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(id);
+                el.textContent = '– kész! Frissítsd az oldalt.';
+                return;
+            }
+            var h = Math.floor(remaining / 3600);
+            var m = Math.floor((remaining % 3600) / 60);
+            var s = remaining % 60;
+            el.textContent = h + 'ó ' + (m < 10 ? '0' + m : m) + 'p ' + (s < 10 ? '0' + s : s) + 'mp';
+        }, 1000);
+
+        window._weedTimers.push(id);
+    });
+})();
+</script>
+{% endblock %}

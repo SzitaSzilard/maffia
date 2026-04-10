@@ -1,0 +1,239 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .bank-layout {
+        background-color: #dcdcdc;
+        color: #000;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        padding: 0;
+        max-width: 420px;
+        margin: 0 auto;
+        border: 1px solid #999;
+    }
+    .section-header {
+        background: linear-gradient(to bottom, #444, #222);
+        color: #fff;
+        text-align: center;
+        padding: 4px;
+        font-weight: bold;
+        border: 1px solid #000;
+        margin-top: 15px;
+        margin-bottom: 0;
+    }
+    .nm1-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #000;
+        background: #f2f2f2;
+    }
+    .nm1-table td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+    }
+    .nm1-table tr:nth-child(odd) { background-color: #e0e0e0; }
+    .nm1-table tr:nth-child(even) { background-color: #f2f2f2; }
+    .nm1-label { width: 50%; font-weight: normal; }
+    .nm1-value { width: 50%; font-weight: bold; }
+    .nm1-input {
+        border: 1px solid #777;
+        padding: 3px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .nm1-btn {
+        background: linear-gradient(to bottom, #f9f9f9, #d0d0d0);
+        border: 1px solid #888;
+        padding: 3px 10px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #000;
+        border-radius: 2px;
+    }
+    .nm1-btn:hover { background: #fff; }
+    .bank-section-body {
+        border: 1px solid #000;
+        background: #f2f2f2;
+        padding: 5px;
+    }
+    .bank-form-table { width: 100%; }
+    .bank-form-table td.bank-currency { width: 20px; }
+    .bank-form-table td.bank-submit { width: 80px; text-align: right; }
+    .input-wrapper { position: relative; }
+    .input-icon { position: absolute; right: 5px; top: 2px; height: 14px; }
+    .transfer-label { background: #dcdcdc; }
+    .bank-empty-state {
+        padding: 20px;
+        text-align: center;
+        background: #f2f2f2;
+        border: 1px solid #000;
+    }
+</style>
+
+<div class="bank-layout">
+    
+    <!-- Top Header -->
+    <div class="card-header" style="border: 1px solid #000;">
+        Üdvözöllek a(z) {{ user.country_name }} bankban!
+    </div>
+    
+    <!-- Vault Image -->
+    <div>
+        <img src="/assets/bank_header.png" class="w-100" style="display: block; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000;" alt="Bank Vault">
+    </div>
+
+    {% if account %}
+        <!-- Bank Information -->
+        <div class="section-header">Bank információk</div>
+        <table class="nm1-table">
+            <tr>
+                <td class="nm1-label">Összesen kiadott hitel</td>
+                <td class="nm1-value">Fejlesztés alatt</td>
+            </tr>
+            <tr>
+                <td class="nm1-label">Jelenlegi hitel kamat</td>
+                <td class="nm1-value">Fejlesztés alatt</td>
+            </tr>
+        </table>
+
+        <!-- Bankszámlád -->
+        <div class="section-header">Bankszámlád</div>
+        <table class="nm1-table">
+            <tr>
+                <td class="nm1-label">Számlaszámod</td>
+                <td class="nm1-value">{{ account.account_number }}</td>
+            </tr>
+            <tr>
+                <td class="nm1-label">Egyenleg</td>
+                <td class="nm1-value">${{ account.balance|number_format }}</td>
+            </tr>
+            <tr>
+                <td class="nm1-label">Számlatörténet</td>
+                <td class="nm1-value">
+                     <a href="#" hx-on:click="document.getElementById('history-overlay').style.display='block'; document.getElementById('history-modal').style.display='block';" 
+                        hx-get="/bank/history" 
+                        hx-target="#history-content" 
+                        hx-trigger="click" style="color: #000; text-decoration: underline;">Kattints ide</a>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Berakás/Kivétel -->
+        <div class="section-header">Berakás/kivétel</div>
+        <div class="bank-section-body">
+            <!-- Deposit -->
+            <form action="/bank/transaction" method="POST" class="mb-5" hx-disabled-elt="button[type='submit']">
+    {{ csrf.keys|raw }}
+                <input type="hidden" name="type" value="deposit">
+                <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                <table class="bank-form-table">
+                    <tr>
+                        <td class="bank-currency">$</td>
+                        <td>
+                            <div class="input-wrapper">
+                                <input type="number" name="amount" class="nm1-input" style="padding-right: 25px;">
+                                <img src="/images/shield_icon_placeholder.png" class="input-icon" alt="">
+                            </div>
+                        </td>
+                        <td class="bank-submit">
+                            <button type="submit" class="nm1-btn">Berakás</button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <!-- Withdraw -->
+            <form action="/bank/transaction" method="POST" hx-disabled-elt="button[type='submit']">
+    {{ csrf.keys|raw }}
+                <input type="hidden" name="type" value="withdraw">
+                <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                <table class="bank-form-table">
+                    <tr>
+                        <td class="bank-currency">$</td>
+                        <td>
+                            <div class="input-wrapper">
+                                <input type="number" name="amount" class="nm1-input" style="padding-right: 25px;">
+                                <img src="/images/shield_icon_placeholder.png" class="input-icon" alt="">
+                            </div>
+                        </td>
+                        <td class="bank-submit">
+                            <button type="submit" class="nm1-btn" style="width: 73px;">Kivétel</button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <div class="text-center text-small mt-5">(A pénz berakás kezelési költsége 5%)</div>
+        </div>
+
+        <!-- Utalás -->
+        <div class="section-header">Átutalás</div>
+        <div class="bank-section-body" style="padding: 0;">
+             <form action="/bank/transfer" method="POST" hx-disabled-elt="button[type='submit']">
+    {{ csrf.keys|raw }}
+                <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                <table class="nm1-table" style="border: none;">
+                    <tr>
+                        <td class="nm1-label transfer-label">Számlaszám</td>
+                        <td><input type="number" name="target_account" class="nm1-input"></td>
+                    </tr>
+                    <tr>
+                        <td class="nm1-label transfer-label">Összeg</td>
+                        <td>
+                             <div class="input-wrapper">
+                                <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%);">$</span>
+                                <input type="number" name="amount" class="nm1-input" style="padding-left: 15px; padding-right: 20px;">
+                                <img src="/images/shield_icon_placeholder.png" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); height: 14px;" alt="">
+                             </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="nm1-label transfer-label">Közlemény</td>
+                        <td><input type="text" name="note" class="nm1-input"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-center transfer-label" style="padding: 8px;">
+                            <button type="submit" class="nm1-btn">Mehet</button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <!-- Pénz lekötése -->
+        <div class="section-header">Pénz lekötése</div>
+        <div class="bank-section-body text-center" style="padding: 20px;">
+            A lekötési csomagok hamarosan elérhetőek lesznek. <br>
+            <span class="text-small text-muted">(Fejlesztés alatt)</span>
+        </div>
+
+    {% else %}
+        <!-- Számlanyitás -->
+        <div class="section-header">Nincs bankszámlád</div>
+        <div class="bank-empty-state">
+            <p class="mb-15">Még nem rendelkezel bankszámlával.</p>
+            <form action="/bank/open" method="POST" hx-disabled-elt="button[type='submit']">
+    {{ csrf.keys|raw }}
+                <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                <button type="submit" class="nm1-btn" style="padding: 10px 20px;">Számlanyitás</button>
+            </form>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- History Modal -->
+<div id="history-overlay" class="modal-overlay" hx-on:click="this.style.display='none'; document.getElementById('history-modal').style.display='none';"></div>
+<div id="history-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:600px; max-height:80vh; background:#dcdcdc; border:2px solid #000; z-index:1000; overflow-y:auto; color: #000;">
+    <div class="card-header flex-between" style="border-color: #000;">
+        <span>Számlatörténet (Utolsó 50)</span>
+        <span style="cursor:pointer; color:#f88;" hx-on:click="document.getElementById('history-overlay').style.display='none'; document.getElementById('history-modal').style.display='none';">X</span>
+    </div>
+    <div id="history-content" class="p-10">
+        Betöltés...
+    </div>
+</div>
+{% endblock %}

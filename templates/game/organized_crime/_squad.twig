@@ -1,0 +1,192 @@
+<div {% if crime %}hx-get="/szervezett-bunozes/csapat" hx-trigger="every 5s [!document.querySelector('input:focus') && !document.querySelector('input[name=\'vehicle_id\']:checked')]" hx-target="#kszb-squad-container"{% endif %}>
+{% set roles = [
+    { 'key': 'organizer', 'label': 'Szervező' },
+    { 'key': 'gang_leader', 'label': 'Bandafőnök' },
+    { 'key': 'union_member', 'label': 'Szakszervezeti tag' },
+    { 'key': 'gunman_1', 'label': 'Fegyveres 1' },
+    { 'key': 'gunman_2', 'label': 'Fegyveres 2' },
+    { 'key': 'gunman_3', 'label': 'Fegyveres 3' },
+    { 'key': 'hacker', 'label': 'Hacker' },
+    { 'key': 'driver_1', 'label': 'Autósofőr 1' },
+    { 'key': 'driver_2', 'label': 'Autósofőr 2' },
+    { 'key': 'pilot', 'label': 'Repülőgép-vezető' }
+] %}
+
+{% if global_error %}
+    <div class="alert-error">{{ global_error }}</div>
+{% endif %}
+{% if global_success %}
+    <div class="alert-success">{{ global_success }}</div>
+{% endif %}
+
+{% if available_vehicles is defined and available_vehicles|length > 0 %}
+<div class="mb-20">
+    <div style="background-color: #333; color: white; text-align: center; padding: 10px; font-weight: bold; border: 1px solid #000; border-bottom: none;">
+        Válassz egy járművet (min. 40 L benzin)
+    </div>
+    <form hx-post="/szervezett-bunozes/jarmu-valasztas" hx-target="#kszb-squad-container" style="margin: 0;">
+        {{ csrf.keys|raw }}
+        <table class="kszb-table" style="margin-top:0;">
+            <thead>
+                <tr>
+                    <th style="width:10%">ID</th>
+                    <th style="width:30%">Típus</th>
+                    <th style="width:10%">Törés</th>
+                    <th style="width:15%">Benzin</th>
+                    <th style="width:10%">Gyors.</th>
+                    <th style="width:10%">Bizt.</th>
+                    <th style="width:15%">Kiválaszt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in available_vehicles %}
+                <tr {% if v.current_fuel < 40 %}style="opacity: 0.7;"{% endif %}>
+                    <td class="text-center">{{ v.id }}</td>
+                    <td><strong>{{ v.type }}</strong></td>
+                    <td class="text-center">{{ v.damage_percent }}%</td>
+                    <td class="text-center" style="color: {% if v.current_fuel < 40 %}#d32f2f{% else %}#388e3c{% endif %}; font-weight:bold;">{{ v.current_fuel }} L</td>
+                    <td class="text-center">{{ v.speed }}</td>
+                    <td class="text-center">{{ v.safety }}</td>
+                    <td class="text-center">
+                        <input type="radio" name="vehicle_id" value="{{ v.id }}" required style="transform: scale(1.5);" {% if v.current_fuel < 40 %}disabled title="Nincs legalább 40L benzin!"{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="text-center" style="border: 1px solid #ccc; border-top: none; padding: 10px; background-color: #eee;">
+            <button type="submit" class="kszb-btn" style="padding: 6px 20px;">Mehet</button>
+        </div>
+    </form>
+    <div class="text-center mt-5" style="font-size: 11px; color: #555;">(Csak olyan járművet válassz, amiben legalább 40 L benzin van!)</div>
+</div>
+{% endif %}
+
+<table class="kszb-table">
+    <thead>
+        <tr>
+            <th colspan="3">Szervezés</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for roleInfo in roles %}
+            {% if not (roleInfo.key == 'organizer' and not crime) %}
+                {% set member = null %}
+                {% if crime %}
+                    {% for m in crime.members %}
+                        {% if m.role == roleInfo.key %}
+                            {% set member = m %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+            <tr>
+                <td>{{ roleInfo.label }}</td>
+                
+                {% if member %}
+                    {# LÉTEZŐ TAG #}
+                    <td>
+                        <a href="/profil/{{ member.username }}" class="kszb-username-link">{{ member.username }}</a>
+                        {% if member.status == 'accepted' or member.role == 'organizer' %}
+                            <span style="font-size:11px; color:#555;"> - esély: {{ member.chance_pct|default('?') }}%</span>
+                            
+                            {% if member.missing_requirement %}
+                                <div class="kszb-status-red">
+                                    {% if member.missing_requirement == 'Még nem választott autót' and member.user_id == session_user_id %}
+                                        Még nem választottál autót!
+                                    {% elseif member.missing_requirement == 'Nincs a garázsban járműve' and member.user_id == session_user_id %}
+                                        Nincs a garázsban járműved!
+                                    {% else %}
+                                        {{ member.missing_requirement }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="kszb-status-green">Kész</div>
+                            {% endif %}
+                        {% else %}
+                            <div class="kszb-status-gray">Még nem válaszolt a meghívóra</div>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" style="width:15%;">
+                        {% if is_organizer and member.role != 'organizer' %}
+                            <form hx-post="/szervezett-bunozes/visszavon" hx-target="#kszb-squad-container" style="margin:0;">
+                                {{ csrf.keys|raw }}
+                                <input type="hidden" name="member_id" value="{{ member.id }}">
+                                <button type="submit" class="kszb-btn" hx-disabled-elt="this">Visszavon</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                {% else %}
+                    {# ÜRES KIOSZTATLAN POSZT #}
+                    <td>
+                        {% if not crime %}
+                        <input type="text" name="username_{{ roleInfo.key }}" form="initial-invite-form" class="kszb-input" placeholder=""
+                            hx-post="/szervezett-bunozes/validacio" hx-trigger="keyup changed delay:500ms" hx-target="#val_{{ roleInfo.key }}">
+                        {% else %}
+                        <input type="text" name="username" class="kszb-input" placeholder="" required form="invite-form-{{ roleInfo.key }}"
+                            hx-post="/szervezett-bunozes/validacio" hx-trigger="keyup changed delay:500ms" hx-target="#val_{{ roleInfo.key }}">
+                        <input type="hidden" name="role" value="{{ roleInfo.key }}" form="invite-form-{{ roleInfo.key }}">
+                        {% endif %}
+                        <div id="val_{{ roleInfo.key }}"></div>
+                    </td>
+                    <td class="text-center" style="width:15%;">
+                        {% if crime %}
+                        <form id="invite-form-{{ roleInfo.key }}" hx-post="/szervezett-bunozes/meghivas" hx-target="#kszb-squad-container" hx-include="closest tr" style="margin:0;">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="role" value="{{ roleInfo.key }}">
+                            <button type="submit" class="kszb-btn" hx-disabled-elt="this">Meghívás</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                {% endif %}
+            </tr>
+            {% endif %}
+        {% endfor %}
+        
+        {% if crime %}
+        <tr>
+            <td colspan="3" class="text-center" style="padding: 15px;">
+                {% if is_organizer %}
+                    <form hx-post="/szervezett-bunozes/elinditas" hx-target="#kszb-squad-container" style="display:inline-block; margin-right: 10px;">
+                        {{ csrf.keys|raw }}
+                        <button type="submit" class="kszb-btn" style="padding: 6px 15px;" hx-disabled-elt="this">Mehet</button>
+                    </form>
+                    <form hx-post="/szervezett-bunozes/feloszlatas" hx-target="#kszb-squad-container" style="display:inline-block;">
+                        {{ csrf.keys|raw }}
+                        <button type="submit" class="kszb-btn" style="padding: 6px 15px;" hx-disabled-elt="this">Feloszlatás</button>
+                    </form>
+                {% else %}
+                    <form hx-post="/szervezett-bunozes/kilepes" hx-target="#kszb-squad-container" style="display:inline-block;">
+                        {{ csrf.keys|raw }}
+                        <button type="submit" class="kszb-btn" style="padding: 6px 15px;" hx-disabled-elt="this">Kilépés</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center" style="padding: 15px;">
+                <form hx-post="/szervezett-bunozes/kezdes" hx-target="#kszb-squad-container" id="initial-invite-form" style="margin:0;" hx-include="[name^='username_']">
+                    {{ csrf.keys|raw }}
+                    <button type="submit" class="kszb-btn" style="padding: 6px 15px;" hx-disabled-elt="this">Meghívás</button>
+                </form>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+
+
+<div class="text-center mt-10" style="font-size: 11px; color: #555;">
+    {% if not crime %}
+        A szervezésre két lehetőséged van, szervezd meg a saját bűnözésed és hívd meg a barátaid, vagy kérj meghívót mások szervezett bűnözésére.
+    {% else %}
+        {% if is_organizer %}
+            A szervezésre két lehetőséged van, szervezd meg a saját bűnözésed és hívd meg a barátaid, vagy kérj meghívót mások szervezett bűnözésére.
+        {% else %}
+            Az akciót a szervező fogja indítani, addig nincs más dolgod mint várni, illetve az indulásig figyelj rá, hogy minden követelménynek megfelelj. (Lásd részletek)
+        {% endif %}
+    {% endif %}
+</div>
+</div>

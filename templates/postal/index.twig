@@ -1,0 +1,388 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .postal-container {
+        border: 1px solid #000;
+        background: #e0e0e0;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        color: #000;
+        padding-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .postal-header {
+        background: #333;
+        color: #fff;
+        padding: 5px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        margin-bottom: 10px;
+        text-decoration: underline;
+    }
+    .postal-content {
+        padding: 10px 20px;
+    }
+    .postal-description {
+        text-align: center;
+        font-size: 12px;
+        font-style: italic;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    .postal-fieldset {
+        border: 1px solid #999;
+        padding: 10px;
+        margin-bottom: 15px;
+        background: #fff;
+    }
+    .postal-fieldset legend {
+        font-weight: bold;
+        font-size: 13px;
+        padding: 0 5px;
+    }
+    .category-link {
+        display: block;
+        padding: 3px 0;
+        color: #000;
+        text-decoration: underline;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .category-link:hover {
+        color: #333;
+        background: #eee;
+    }
+    .category-disabled {
+        display: block;
+        padding: 3px 0;
+        color: #999;
+        font-size: 12px;
+        cursor: not-allowed;
+        text-decoration: none;
+    }
+    .postal-select {
+        padding: 3px;
+        font-size: 12px;
+    }
+    .postal-btn {
+        padding: 4px 15px;
+        background: #ddd;
+        border: 1px solid #999;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .postal-btn:hover {
+        background: #ccc;
+    }
+    .cart-item {
+        margin-bottom: 3px;
+        font-size: 12px;
+    }
+    .cart-header {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+    .cart-links {
+        font-size: 11px;
+    }
+    .cart-links a {
+        color: #005580;
+        text-decoration: underline;
+    }
+    .shipping-cost {
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+    .send-section {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #999;
+    }
+    .send-label {
+        font-weight: bold;
+        font-size: 13px;
+    }
+    .postal-input {
+        padding: 3px;
+        font-size: 12px;
+        width: 200px;
+        border: 1px solid #999;
+    }
+    .postal-alert {
+        background: #fcc;
+        color: #a00;
+        border: 1px solid #a00;
+        padding: 8px;
+        margin: 10px 20px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    .success-box {
+        background: #cfc;
+        color: #060;
+        border: 1px solid #060;
+        padding: 8px;
+        margin: 10px 20px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    #postal-item-selector {
+        min-height: 20px;
+    }
+</style>
+
+    {% if not can_access %}
+        <div style="text-align: center; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; color: #333;">
+            A posta használatához szükséges minimum rang: {{ required_rank_name }}
+        </div>
+    {% else %}
+<div class="postal-container">
+    <div class="postal-header">ÚJ CSOMAG ÖSSZEÁLLÍTÁSA</div>
+    
+    <div class="postal-description">
+        A postán keresztül, tudod a különböző tárgyaid, autóid, kredited, elküldeni más játékosnak.<br>
+        Többféle tárgy esetén, tudsz csomagot összeállítani, nagyobb posta költség ellenében.
+    </div>
+
+
+    {# --- ÉPPEN KÉZBESÍTETT CSOMAGOK --- #}
+    {% if just_delivered|length > 0 %}
+        {% for pkg in just_delivered %}
+            <div class="success-box" style="text-align:left;">
+                <strong>📦 Csomag megérkezett {{ pkg.sender_name }} feladótól!</strong><br>
+                Tartalom:
+                <ul style="margin:5px 0 0 15px; padding:0;">
+                    {% for item in pkg.items %}
+                        <li>{{ item.quantity }} db {{ item.item_name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# --- VÁRAKOZÓ CSOMAGOK (BUBORÉK) --- #}
+    {% if pending_packages|length > 0 %}
+        <div style="background:#fff8dc; border:1px solid #daa520; padding:10px; margin:10px 20px; font-size:12px;">
+            <strong>📬 Hamarosan érkező csomagok:</strong>
+            {% for pkg in pending_packages %}
+                <div style="margin-top:5px; padding:5px; background:#fffbe6; border:1px dashed #daa520;">
+                    <strong>{{ pkg.sender_name }}</strong> feladótól
+                    {% if pkg.seconds_remaining > 0 %}
+                        — <span class="postal-countdown" data-target="{{ 'now'|date('U') + pkg.seconds_remaining }}" style="color:#b8860b; font-weight:bold;">
+                            {{ (pkg.seconds_remaining / 60)|round(0, 'ceil') }} perc múlva átvehető
+                        </span>
+                    {% else %}
+                        — <span style="color:#228b22; font-weight:bold;">Megérkezett! Frissítsd az oldalt az átvételhez.</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <script>
+        // Dinamikus countdown
+        document.querySelectorAll('.postal-countdown').forEach(function(el) {
+            var targetTs = parseInt(el.getAttribute('data-target'));
+            if (!targetTs) return;
+            
+            function updateTimer() {
+                if (!document.body.contains(el)) return;
+                
+                var now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                          ? window.NetMafia.now() 
+                          : Math.floor(Date.now() / 1000);
+                var seconds = targetTs - now;
+                
+                if (seconds <= 0) {
+                    el.style.color = '#228b22';
+                    el.textContent = 'Megérkezett! Frissítsd az oldalt az átvételhez.';
+                    return;
+                }
+                var mins = Math.floor(seconds / 60);
+                var secs = seconds % 60;
+                if (mins > 0) {
+                    el.textContent = mins + ' perc ' + (secs < 10 ? '0' : '') + secs + ' mp múlva átvehető';
+                } else {
+                    el.textContent = secs + ' másodperc múlva átvehető';
+                }
+                setTimeout(updateTimer, 1000);
+            }
+            updateTimer();
+        });
+        </script>
+    {% endif %}
+
+    {# --- ELKÜLDÖTT CSOMAGOK (FELADÓ NÉZET) --- #}
+    {% if sent_packages|length > 0 %}
+        <div style="background:#e6f2ff; border:1px solid #005580; padding:10px; margin:10px 20px; font-size:12px;">
+            <strong>🚀 Folyamatban lévő feladott csomagjaid:</strong>
+            {% for pkg in sent_packages %}
+                <div style="margin-top:5px; padding:5px; background:#fff; border:1px dashed #005580;">
+                    Küldve: <strong>{{ pkg.recipient_name }}</strong> részére
+                    {% if pkg.seconds_elapsed < 600 %}
+                        — <span class="postal-cancel-countdown" data-target="{{ 'now'|date('U') + (600 - pkg.seconds_elapsed) }}" style="color:#d9534f; font-weight:bold;">
+                            {{ ((600 - pkg.seconds_elapsed) / 60)|round(0, 'ceil') }} percig még visszavonható
+                        </span>
+                        <form action="/posta/csomag/torol/{{ pkg.id }}" method="POST" style="display:inline; margin-left:10px;" id="cancel-form-{{ pkg.id }}">
+                            {{ csrf.keys | raw }}
+                            <button type="button" hx-on:click="showCancelModal({{ pkg.id }})" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:11px; text-decoration:underline;">[Visszavonom]</button>
+                        </form>
+                    {% else %}
+                        — <span style="color:#666;">Folyamatban (már nem vonható vissza)</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <script>
+        document.querySelectorAll('.postal-cancel-countdown').forEach(function(el) {
+            var targetTs = parseInt(el.getAttribute('data-target'));
+            if (!targetTs) return;
+            
+            function updateCancelTimer() {
+                if (!document.body.contains(el)) return;
+                
+                var now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                          ? window.NetMafia.now() 
+                          : Math.floor(Date.now() / 1000);
+                var seconds = targetTs - now;
+                
+                if (seconds <= 0) {
+                    el.textContent = 'Már nem vonható vissza';
+                    el.style.color = '#666';
+                    // Elrejtjük a törlés formját
+                    var btnForm = el.nextElementSibling;
+                    if (btnForm && btnForm.tagName === 'FORM') {
+                        btnForm.style.display = 'none';
+                    }
+                    return;
+                }
+                var mins = Math.floor(seconds / 60);
+                var secs = seconds % 60;
+                if (mins > 0) {
+                    el.textContent = mins + ' perc ' + secs + ' mp-ig még visszavonható';
+                } else {
+                    el.textContent = secs + ' másodpercig még visszavonható';
+                }
+                setTimeout(updateCancelTimer, 1000);
+            }
+            updateCancelTimer();
+        });
+
+        var packageToCancel = null;
+        function showCancelModal(pkgId) {
+            packageToCancel = pkgId;
+            document.getElementById('cancel-modal').style.display = 'flex';
+        }
+
+        function confirmCancel() {
+            if (packageToCancel) {
+                document.getElementById('cancel-form-' + packageToCancel).submit();
+            }
+        }
+
+        function hideCancelModal() {
+            document.getElementById('cancel-modal').style.display = 'none';
+            packageToCancel = null;
+        }
+        </script>
+
+        {# --- CUSTOM CANCEL MODAL --- #}
+        <div id="cancel-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
+            <div class="modal-box" style="text-align: center; max-width: 400px; width: 90%;">
+                <div class="modal-title" style="margin-bottom: 10px; font-weight: bold; font-size: 14px;">🛑 Csomag visszavonása</div>
+                <div id="cancel-modal-text" style="color: #555; margin-bottom: 20px; font-size: 13px;">
+                    Biztosan visszavonod a kiválasztott csomagot?<br><br>
+                    <strong>A benne lévő tárgyakat és a kifizetett postaköltséget azonnal visszakapod az eszköztáradba!</strong>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <button type="button" hx-on:click="confirmCancel()" class="postal-btn" style="background-color: #d9534f; color: white; border: 1px solid #d43f3a;">Igen, Visszavonom</button>
+                    <button type="button" hx-on:click="hideCancelModal()" class="postal-btn">Mégse</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="postal-content">
+        {# --- KATEGÓRIA VÁLASZTÓ --- #}
+        <fieldset class="postal-fieldset">
+            <legend>Mit szeretnél feladni?</legend>
+            {% for key, label in active_categories %}
+                <a href="#"
+                   class="category-link"
+                   hx-get="/posta/targyak/{{ key }}"
+                   hx-target="#postal-item-selector"
+                   hx-swap="innerHTML">{{ label }}</a>
+            {% endfor %}
+            {% for key, label in inactive_categories %}
+                <span class="category-disabled">{{ label }} (hamarosan)</span>
+            {% endfor %}
+        </fieldset>
+
+        {# --- TÁRGY KIVÁLASZTÓ (HTMX-szel betöltődik) --- #}
+        <div id="postal-item-selector"></div>
+
+        {# --- CSOMAG TARTALOM --- #}
+        {% if cart|length > 0 %}
+            <fieldset class="postal-fieldset">
+                <legend>Csomagod 
+                    <span class="cart-links">
+                        [<a href="#" 
+                            hx-get="/posta/targyak/weapon" 
+                            hx-target="#postal-item-selector" 
+                            hx-swap="innerHTML">új tárgy hozzáadása</a>]
+                        [<a href="#" hx-on:click="if(confirm('Biztosan törlöd az egész csomagot?')) { document.getElementById('clear-cart-form').submit(); }">csomag törlése</a>]
+                    </span>
+                </legend>
+
+                {% set category_names = {
+                    'weapon': 'Fegyver', 'armor': 'Védelem', 'consumable': 'Elfogyasztható',
+                    'vehicle': 'Jármű', 'money': 'Pénz', 'credits': 'Kredit',
+                    'bullets': 'Töltény', 'building': 'Épület'
+                } %}
+
+                {% for item in cart %}
+                    <div class="cart-item">
+                        <strong>{{ category_names[item.category] ?? item.category }}</strong>
+                        - {{ item.quantity }} db {{ item.name }}
+                        <form action="/posta/kosar/torol" method="POST" style="display:inline;" hx-disabled-elt="button[type='submit']">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="index" value="{{ loop.index0 }}">
+                            <button type="submit" style="background:none; border:none; color:red; cursor:pointer; font-size:11px; text-decoration:underline;">[törlés]</button>
+                        </form>
+                    </div>
+                {% endfor %}
+
+                <div class="shipping-cost">
+                    Küldési díj összesen: ${{ shipping_cost|number_format(0, ',', '.') }}
+                </div>
+
+                {# --- KÜLDÉS --- #}
+                <div class="send-section">
+                    <div class="send-label">KÜLDÉS</div>
+                    <form action="/posta/kuldes" method="POST" style="margin-top:5px;" hx-disabled-elt="button[type='submit']">
+                        {{ csrf.keys|raw }}
+                        <label style="font-size:12px;">- Címzett neve: </label>
+                        <input type="text" name="recipient" class="postal-input" placeholder="Felhasználónév" required>
+                        <button type="submit" class="postal-btn" style="margin-left:5px;">Csomag küldése</button>
+                    </form>
+                </div>
+            </fieldset>
+        {% endif %}
+
+        {# Rejtett form a teljes kosár törléséhez (JS-en keresztül hívjuk) #}
+        <form id="clear-cart-form" action="/posta/kosar/torles-mind" method="POST" style="display:none;">
+            {{ csrf.keys|raw }}
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

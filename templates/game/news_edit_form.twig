@@ -1,0 +1,21 @@
+{# [2026-02-28] FIX: CSRF token hozzáadva #}
+<form hx-post="/game/news/{{ item.id }}/update" hx-target="#news-container" hx-swap="outerHTML">
+    {{ csrf.keys|raw }}
+    <div class="mb-3">
+        <label for="topic-{{ item.id }}" class="form-label fw-bold">Téma</label>
+        <input type="text" class="form-control" id="topic-{{ item.id }}" name="topic" value="{{ topic }}" placeholder="Pl. Hírek, Karbantartás..." required>
+    </div>
+    <div class="mb-3">
+        <label for="content-{{ item.id }}" class="form-label fw-bold">Bejegyzés szerkesztése</label>
+        <textarea class="form-control" id="content-{{ item.id }}" name="content" rows="6" required>{{ item.content }}</textarea>
+    </div>
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" hx-get="/game" hx-target="#news-container" hx-select="#news-container" hx-swap="outerHTML">
+            Mégse
+        </button>
+        <button type="submit" class="btn btn-success" hx-disabled-elt="this">
+            <i class="fas fa-save"></i> Módosítás Mentése
+        </button>
+    </div>
+</form>
+

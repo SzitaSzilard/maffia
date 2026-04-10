@@ -1,0 +1,33 @@
+<table class="bank-table">
+    <thead>
+        <tr style="background-color: #333; color: #fff;">
+            <th>Mikor</th>
+            <th>Típus</th>
+            <th>Összeg</th>
+            <th>Megjegyzés</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tx in history %}
+            <tr>
+                <td>{{ tx.created_at }}</td>
+                <td>
+                    {% if tx.type == 'deposit' %}Pénz berakás
+                    {% elseif tx.type == 'withdraw' %}Pénz kivétel
+                    {% elseif tx.type == 'transfer_in' %}Utalás (Jóváírás)
+                    {% elseif tx.type == 'transfer_out' %}Utalás
+                    {% else %}{{ tx.type }}
+                    {% endif %}
+                </td>
+                <td style="color: {% if tx.amount > 0 %}#006400{% else %}#ff4444{% endif %}; font-weight:bold;">
+                    {{ tx.amount > 0 ? '+' : '' }}${{ tx.amount|abs|number_format }}
+                </td>
+                <td>{{ tx.description }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4" style="text-align:center; padding:10px; color:#999;">Nincs tranzakció.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

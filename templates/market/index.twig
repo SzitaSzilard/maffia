@@ -1,0 +1,82 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .market-top-btn,
+    .game-tab.market-tab {
+        /* Inherits from global .game-tab */
+    }
+
+    .market-btn-group {
+        display: inline-flex !important;
+        border: 1px solid #555 !important;
+        background: #333 !important;
+    }
+    .market-cat-btn {
+        background: #333 !important;
+        color: #ddd !important;
+        border: none !important;
+        border-right: 1px solid #555 !important;
+        padding: 5px 6px !important;
+        font-size: 11px !important;
+        cursor: pointer !important;
+    }
+    .market-cat-btn:last-child { border-right: none !important; }
+    .market-cat-btn:hover { background: #444 !important; color: #fff !important; }
+    .market-cat-btn.active { background: #555 !important; color: #fff !important; font-weight: bold !important; }
+
+    /* Override any default button outlines */
+    button:focus { outline: none !important; }
+</style>
+
+{% if not can_access_market %}
+    <div style="text-align: center; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; color: #333;">
+        A piac használatához szükséges minimum rang: {{ required_rank_name }}
+    </div>
+{% else %}
+<div style="width: 100%; max-width: 800px; margin: 0 auto; color: #000; font-family: Arial, sans-serif; padding-top: 15px;">
+    <!-- Felső sor: Új áru / Eladásaid -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <button class="game-tab {% if currentMode == 'uj-aru' %}active{% endif %}" 
+                hx-get="/piac/uj-aru" 
+                hx-target="#market-content" 
+                hx-swap="innerHTML"
+                hx-push-url="?mode=uj-aru"
+                hx-on:click="document.querySelectorAll('.market-cat-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.game-tab').forEach(btn => btn.classList.remove('active')); this.classList.add('active');">Új áru</button>
+        <button class="game-tab {% if currentMode == 'eladasaid' %}active{% endif %}" 
+                hx-get="/piac/eladasaid" 
+                hx-target="#market-content" 
+                hx-swap="innerHTML"
+                hx-push-url="?mode=eladasaid"
+                hx-on:click="document.querySelectorAll('.market-cat-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.game-tab').forEach(btn => btn.classList.remove('active')); this.classList.add('active');">Eladásaid</button>
+    </div>
+
+    <!-- Alsó sor (Kategóriák) -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <div class="market-btn-group" id="market-category-buttons">
+            {% for key, name in categories %}
+                <button class="market-cat-btn {% if currentMode == 'lista' and ((currentCat is defined and currentCat == key) or (currentCat is not defined and key == 'weapon')) %}active{% endif %}"
+                        hx-get="/piac/lista/{{ key }}" 
+                        hx-target="#market-content" 
+                        hx-swap="innerHTML"
+                        hx-push-url="?mode=lista&cat={{ key }}"
+                        hx-on:click="document.querySelectorAll('.market-cat-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.market-top-btn').forEach(btn => btn.classList.remove('active')); this.classList.add('active');">
+                    {{ name }}
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Piac Tartalom -->
+    <div id="market-content">
+        {% if currentMode == 'uj-aru' %}
+            {% include 'market/partials/sell_form.twig' %}
+        {% elseif currentMode == 'eladasaid' %}
+            {% include 'market/partials/user_listings.twig' with tabData %}
+        {% else %}
+            {% include 'market/partials/listings_table.twig' with {'listings': defaultListings, 'category': currentCat ?? 'weapon', 'categoryName': defaultCategoryName} %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

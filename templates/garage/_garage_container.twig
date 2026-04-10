@@ -1,0 +1,125 @@
+<div class="garage-container">
+
+    <div class="garage-header">
+        <h3>Összesen {{ total_vehicles }} járműved van</h3>
+        
+        <div class="garage-status">
+            {% set garage_vehicles = vehicles|filter(v => v.location == 'garage')|length %}
+            {% set street_vehicles = vehicles|filter(v => v.location == 'street')|length %}
+            
+            {% if street_vehicles > 0 %}
+                <span class="warning-text tooltip" style="cursor: help;">
+                    ⚠️ {{ street_vehicles }} jármű az utcán parkol!
+                    <span class="tooltiptext">Ellophatják az autódat, ha az utcán tárolod!</span>
+                </span><br>
+                <small>(Garázsban: {{ garage_vehicles }} - Utcán: {{ street_vehicles }})</small>
+            {% elseif garage_vehicles > capacity %}
+                <span class="warning-text">⚠️ Túlzsúfolt garázs!</span><br>
+                <small>(Garázsban: {{ garage_vehicles }} - Kapacitás: {{ capacity }})</small>
+            {% else %}
+                Garázsban: {{ garage_vehicles }} jármű <br>
+                <small>(Kapacitás: {{ capacity }} - Szabad: {{ free_slots }})</small>
+            {% endif %}
+        </div>
+        
+        <div class="expand-link">
+            Nagyobb garázs vásárlásához kattints 
+            {% if has_property_in_country %}
+                <a href="#" hx-get="/garazs/bovites" hx-target="#game-content" hx-push-url="true">Ide</a>
+            {% else %}
+                <span class="disabled-link tooltip">
+                    Ide
+                    <span class="tooltiptext">Ha nincs ingatlanod, nem tudod bővíteni az ingatlanod garázs méretét</span>
+                </span>
+            {% endif %}
+            itt tudsz bővíteni
+        </div>
+    </div>
+
+    <!-- Actions (Visual only for now) -->
+    <div class="content-header-dark">
+        Járműveid:
+    </div>
+
+    <form id="garage-batch-form" hx-post="/garazs/batch/quick-sell" hx-target="#garage-batch-messages" hx-swap="innerHTML">
+        {{ csrf.keys|raw }}
+        <div id="garage-batch-messages"></div>
+
+        <table class="vehicles-table" id="vehicles-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Típus</th>
+                <th>Törés</th>
+                <th>Benzin</th>
+                <th>
+                    <a href="#" hx-get="/garazs/partials/container?sort=speed&dir={{ current_sort == 'speed' and current_dir == 'asc' ? 'desc' : 'asc' }}" hx-target="#garage-container-wrapper" hx-swap="innerHTML" style="color: inherit; text-decoration: none;">
+                        Gyors. {% if current_sort == 'speed' %}{{ current_dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="#" hx-get="/garazs/partials/container?sort=safety&dir={{ current_sort == 'safety' and current_dir == 'asc' ? 'desc' : 'asc' }}" hx-target="#garage-container-wrapper" hx-swap="innerHTML" style="color: inherit; text-decoration: none;">
+                        Bizt. {% if current_sort == 'safety' %}{{ current_dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="#" hx-get="/garazs/partials/container?sort=tuning_percent&dir={{ current_sort == 'tuning_percent' and current_dir == 'asc' ? 'desc' : 'asc' }}" hx-target="#garage-container-wrapper" hx-swap="innerHTML" style="color: inherit; text-decoration: none;">
+                        Tuning {% if current_sort == 'tuning_percent' %}{{ current_dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>Helye</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicle in vehicles %}
+                {% include 'garage/_vehicle_row.twig' %}
+            {% else %}
+                <tr>
+                    <td colspan="8" class="no-vehicles">Nincs járműved.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="legend">
+        <span style="color: red;">●</span> - Alapértelmezett jármű <br>
+        <span style="color: green;">■</span> - Limitált jármű <br>
+        <span style="color: darkred;">■</span> - Ritka jármű
+    </div>
+
+    <div class="action-buttons">
+        <button type="submit" class="btn" id="batch-sell-btn" hx-indicator="this">Kijelöltek gyors eladása</button>
+        <button type="button" class="btn">Kijelöltek bezúzása</button>
+    </div>
+    <div class="action-buttons">
+        <button type="button" class="btn">Kijelöltek megjavítása</button>
+        <button type="button" class="btn">Kijelöltek megtankolása</button>
+    </div>
+
+    <div class="help-text">
+        Kijelöléshez kattints a soroknál lévő <input type="checkbox" disabled> négyzetre.
+        <br>
+        Ritka, Egyedi és Prémium járműveket nem lehet bontóba adni (Gyors eladás), azokat csak a piacon adhatod el.
+    </div>
+
+    </form>
+
+    <script>
+        document.getElementById('garage-batch-form').addEventListener('change', function(e) {
+            if (e.target.name === 'selected_vehicles[]') {
+                const checkboxes = document.querySelectorAll('input[name="selected_vehicles[]"]:checked');
+                const btn = document.getElementById('batch-sell-btn');
+                if (btn) {
+                    const count = checkboxes.length;
+                    if (count > 0) {
+                        const total = count * 24500;
+                        // Format with spaces as thousand separators if preferred, or standard comma
+                        btn.innerHTML = `Kijelöltek gyors eladása (+$${total.toLocaleString('en-US')})`;
+                    } else {
+                        btn.innerHTML = 'Kijelöltek gyors eladása';
+                    }
+                }
+            }
+        });
+    </script>
+</div>

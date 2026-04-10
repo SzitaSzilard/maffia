@@ -1,0 +1,35 @@
+{# [2026-02-28] FIX: CSRF token hozzáadva #}
+<div class="text-center p-15">
+    <h3 style="margin-bottom: 20px; color: #333;">Garázs eladása</h3>
+    
+    <div style="margin-bottom: 20px; font-size: 14px;">
+        Biztosan eladod az összes <strong>({{ slots }})</strong> slotot 
+        ebben az országban: <strong>{{ country }}</strong>?
+        <br><br>
+        <span style="color: #080; font-weight: bold; font-size: 16px;">
+            Kapott összeg: ${{ sell_price|number_format(0, '.', ',') }}
+        </span>
+        <br><br>
+        <span style="color: #c00; font-size: 11px;">
+            (Az eladás után újra megvásárolhatod a csomagokat.)
+        </span>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 20px;">
+        <form hx-post="/garazs/bovites/eladas" hx-target="#game-content" style="margin:0;">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="country" value="{{ country }}">
+            <button type="submit"
+                hx-disabled-elt="this"
+                style="background: linear-gradient(to bottom, #ffcccc, #ff9999); border: 1px solid #cc0000; color: #900; padding: 8px 20px;">
+                Igen, eladom
+            </button>
+        </form>
+        
+        <button 
+            onclick="document.getElementById('sell-modal').style.display='none'"
+            style="padding: 8px 20px;">
+            Mégse
+        </button>
+    </div>
+</div>

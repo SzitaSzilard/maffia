@@ -1,0 +1,166 @@
+{% extends layout %}
+
+{% block content %}
+<style>
+    .profile-container {
+        border: 2px solid #000;
+        background-color: #ccc;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        font-family: Verdana, sans-serif;
+        font-size: 11px;
+    }
+    .profile-header {
+        background: linear-gradient(to bottom, #444, #222);
+        color: white;
+        text-align: center;
+        padding: 8px;
+        font-weight: bold;
+        border-bottom: 2px solid #000;
+        font-size: 12px;
+    }
+    .profile-row {
+        display: flex;
+        border-bottom: 1px solid #000; /* Separator between rows */
+        /* Space between rows in screenshot? Yes there seems to be a tiny gap or just border */
+        margin-bottom: 3px; 
+    }
+    .profile-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .profile-label {
+        width: 40%;
+        background-color: #ccc; /* Darker gray */
+        padding: 5px 10px;
+        border: 1px solid #000;
+        font-weight: normal;
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-value {
+        width: 60%;
+        background-color: #e6e6e6; /* Lighter gray */
+        padding: 5px 10px;
+        border: 1px solid #000;
+        border-left: none; /* Avoid double border */
+        display: flex;
+        align-items: center;
+        color: #333;
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-header">
+        {{ profile.username }} profilja
+    </div>
+
+    <!-- Státusz -->
+    <div class="profile-row">
+        <div class="profile-label">Státusz:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Vagyon -->
+    <div class="profile-row">
+        <div class="profile-label">Vagyon:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Rang -->
+    <div class="profile-row">
+        <div class="profile-label">Rang:</div>
+        <div class="profile-value">{{ profile.rank_name }}</div>
+    </div>
+
+    <!-- Karakter megjelenés -->
+    <div class="profile-row">
+        <div class="profile-label">Karakter megjelenés:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Fegyvere -->
+    {% if profile.equipped_weapon_name %}
+    <div class="profile-row">
+        <div class="profile-label">Alapértelmezett Fegyver:</div>
+        <div class="profile-value">{{ profile.equipped_weapon_name }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Küzdelmi szint -->
+    <div class="profile-row">
+        <div class="profile-label">Küzdelmi szint:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Küzdelem -->
+    <div class="profile-row">
+        <div class="profile-label">Küzdelem:</div>
+        <div class="profile-value">
+            {% set total_fights = profile.wins + profile.losses %}
+            {% set win_percent = total_fights > 0 ? (profile.wins / total_fights * 100)|round(1) : 0 %}
+            Nyert: {{ profile.wins }} / Vesztett: {{ profile.losses }} ({{ win_percent }}%)
+        </div>
+    </div>
+
+    <!-- Box mérkőzés -->
+    <div class="profile-row">
+        <div class="profile-label">Box mérkőzések:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Versenyzés -->
+    <div class="profile-row">
+        <div class="profile-label">Versenyzés:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Póker (Skipped per request) -->
+
+    <!-- Tartózkodási helye (Real Data) -->
+    <div class="profile-row">
+        <div class="profile-label">Tartózkodási helye:</div>
+        <div class="profile-value">{{ profile.country_name|default(profile.country_code) }}</div>
+    </div>
+
+    <!-- Munkahelye -->
+    <div class="profile-row">
+        <div class="profile-label">Munkahelye (beosztás):</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Ingatlan -->
+    <div class="profile-row">
+        <div class="profile-label">{{ profile.country_name|default('Amerikai') }} ingatlan:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+
+    <!-- Alapértelmezett Járműve -->
+    {% if profile.default_vehicle_name %}
+    <div class="profile-row">
+        <div class="profile-label">Alapértelmezett Autó:</div>
+        <div class="profile-value">{{ profile.default_vehicle_name }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Regisztráció dátuma (Real Data) -->
+    <div class="profile-row">
+        <div class="profile-label">Regisztráció dátum:</div>
+        <div class="profile-value">{{ profile.created_at|default('Ismeretlen') }}</div>
+    </div>
+
+    <!-- Utoljára itt járt (Real Data) -->
+    <div class="profile-row">
+        <div class="profile-label">Utoljára itt járt:</div>
+        <div class="profile-value">{{ profile.last_activity|default('Régen') }}</div>
+    </div>
+
+    <!-- Bandája -->
+    <div class="profile-row">
+        <div class="profile-label">Bandája:</div>
+        <div class="profile-value">Fejlesztés alatt</div>
+    </div>
+</div>
+{% endblock %}

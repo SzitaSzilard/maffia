@@ -1,0 +1,67 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .msg-tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 15px;
+        gap: 2px;
+    }
+    .msg-tab {
+        padding: 8px 24px;
+        background: #555;
+        color: #fff;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: bold;
+        border-radius: 4px 4px 0 0;
+    }
+    .msg-tab:hover { background: #666; color: #fff; }
+    .msg-tab.active { background: #444; }
+</style>
+
+{# TAB NAVIGATION #}
+<div class="msg-tabs">
+    <a href="#" hx-get="/uzenetek/inbox" hx-target="#game-content" hx-push-url="true"
+       class="msg-tab {% if active_tab == 'inbox' %}active{% endif %}">
+        Bejövő
+    </a>
+    <a href="#" hx-get="/uzenetek/outbox" hx-target="#game-content" hx-push-url="true"
+       class="msg-tab {% if active_tab == 'outbox' %}active{% endif %}">
+        Kimenő
+    </a>
+    <a href="#" hx-get="/uzenetek/send" hx-target="#game-content" hx-push-url="true"
+       class="msg-tab {% if active_tab == 'send' %}active{% endif %}">
+        Küldés
+    </a>
+</div>
+
+{# SUCCESS/ERROR MESSAGES #}
+{% if message_success %}
+<div class="alert-success">
+    ✓ {{ message_success }}
+</div>
+{% endif %}
+
+{% if message_errors %}
+<div class="alert-error">
+    {% for error in message_errors %}
+        {{ error }}<br>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# TAB CONTENT #}
+{% if active_tab == 'send' %}
+    {% include 'messages/send.twig' %}
+{% else %}
+    {% include 'messages/list.twig' %}
+{% endif %}
+
+<p style="color: #888; font-size: 10px; text-align: center; margin-top: 15px;">
+    Az utolsó 200-nál több, 30 napnál régebbi üzenetek automatikusan törlésre kerülnek!
+</p>
+
+<script src="/js/messages.js"></script>
+{% endblock %}

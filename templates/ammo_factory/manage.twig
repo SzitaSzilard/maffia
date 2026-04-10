@@ -1,0 +1,143 @@
+{% extends layout %}
+
+{% block content %}
+<style>
+    .manage-container {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #1a1a1a;
+        border: 1px solid #000;
+        color: #ddd;
+    }
+    
+    .manage-header {
+        background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .manage-body {
+        padding: 20px;
+        background: #222;
+    }
+    
+    .manage-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #fff;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    .manage-input {
+        padding: 6px;
+        width: 120px;
+        background: #111;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .manage-btn {
+        background: linear-gradient(to bottom, #bd362f, #a90329); /* Red gradient */
+        color: white;
+        border: 1px solid #800;
+        padding: 6px 15px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .manage-btn:hover {
+        background: #d00;
+        text-decoration: none;
+    }
+
+    .manage-link {
+        color: #aaa;
+        font-size: 11px;
+        text-decoration: none;
+    }
+    .manage-link:hover { color: #fff; text-decoration: underline; }
+    
+    /* flash styling → global style.css (.alert-success / .alert-error) */
+</style>
+
+<div class="manage-container">
+    <div class="manage-header">Tölténygyár Kezelése</div>
+
+    <div class="manage-body">
+
+        <!-- Statisztika Box (Status) - Polling Enabled -->
+        <div id="factory-status" hx-get="/toltenygyar/kezel?view=status" hx-trigger="every 5s" hx-swap="innerHTML">
+            {% include 'ammo_factory/partials/status.twig' %}
+        </div>
+
+        <!-- Árazás Form -->
+        <form hx-post="/toltenygyar/kezel" hx-target="#game-content" hx-swap="innerHTML" class="mb-20">
+             <input type="hidden" name="update_price" value="1">
+            <div class="mb-15">
+                <label class="manage-label">Töltény Ára ($ / db):</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-weight:bold; color:#4f4;">$</span>
+                    <input type="number" name="price" value="{{ factory.ammo_price }}" class="manage-input" style="width: 80px;" required>
+                    <button type="submit" class="manage-btn" style="margin-left: 10px;" hx-disabled-elt="this">Mentés</button>
+                    <div style="font-size:10px; color:#888; margin-left: 10px;">Az ár dollárban értendő darabonként.</div>
+                </div>
+            </div>
+        </form>
+
+        <form hx-post="/toltenygyar/kezel" hx-target="#game-content" hx-swap="innerHTML" class="mb-20">
+            <input type="hidden" name="update_settings" value="1">
+            
+
+
+            <div class="mb-15">
+                <label class="manage-label">Kifizetés módja:</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <select name="payout_mode" class="manage-input" style="width: 200px;">
+                        <option value="instant" {% if factory.payout_mode == 'instant' %}selected{% endif %}>Azonnali (Minden vásárláskor)</option>
+                        <option value="daily" {% if factory.payout_mode == 'daily' %}selected{% endif %}>Napi (Éjfélkor)</option>
+                        <option value="weekly" {% if factory.payout_mode == 'weekly' %}selected{% endif %}>Heti (Vasárnap éjfélkor)</option>
+                    </select>
+                    <button type="submit" class="manage-btn" style="margin-left: 10px;" hx-disabled-elt="this">Beállítások Mentése</button>
+                </div>
+                <div class="manage-hint">Mikor kerüljön jóváírásra a számládon.</div>
+            </div>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
+
+        <!-- Termelés Form -->
+        <div class="mb-20">
+            <label class="manage-label">Termelés Indítása</label>
+            {% if factory.is_producing %}
+                <p style="color: #aaa; font-style:italic; font-size:12px;">A termelés folyamatban van. Várj amíg befejeződik!</p>
+            {% else %}
+                <form hx-post="/toltenygyar/kezel" hx-target="#game-content" hx-swap="innerHTML">
+            {{ csrf.keys|raw }}
+                    <input type="hidden" name="start_production" value="1">
+                    <div style="display:flex; align-items:center; gap:5px; margin-bottom: 5px;">
+                        <input type="number" name="investment" placeholder="$ Befektetés" class="manage-input" style="width: 150px;" required>
+                        <button type="submit" class="manage-btn" hx-disabled-elt="this">Indítás</button>
+                    </div>
+                    <small style="color: #888; font-size:11px;">
+                        Költség: $1.8 / db | Sebesség: 1,500 db / perc | Max: $900,000
+                    </small>
+                </form>
+            {% endif %}
+        </div>
+        
+        <div class="manage-footer">
+            <a href="/toltenygyar" class="manage-link">&laquo; Vissza a Publikus Nézetre</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,36 @@
+{% if error %}
+    <div class="alert alert-error">
+        ❌ {{ error }}
+    </div>
+{% elseif success %}
+    <div class="alert {% if result.winner_id == app.user.id %}alert-success{% elseif result.escaped %}alert-info{% else %}alert-danger{% endif %}">
+        <h4>
+            {% if result.escaped %}
+                🏃 {{ result.message }}
+            {% elseif result.winner_id == app.user.id %}
+                🏆 GYŐZELEM!
+            {% else %}
+                💀 VERESÉG!
+            {% endif %}
+        </h4>
+        
+        {% if not result.escaped %}
+            <p>
+                {% if result.money_stolen > 0 %}
+                    Ellopott pénz: ${{ result.money_stolen|number_format }}<br>
+                {% endif %}
+                {% if result.damage_dealt > 0 %}
+                    Okozott sebzés: {{ result.damage_dealt }} HP<br>
+                {% endif %}
+                {% if result.gained_xp > 0 %}
+                    Szerzett tapasztalat: +{{ result.gained_xp }} XP
+                {% endif %}
+            </p>
+            <p>
+                {{ result.message }}
+            </p>
+        {% endif %}
+
+        <button type="button" class="btn" onclick="window.location.reload()">Rendben</button>
+    </div>
+{% endif %}

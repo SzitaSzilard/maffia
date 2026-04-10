@@ -1,0 +1,165 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .manage-container {
+        max-width: 800px; /* Kept wider for table */
+        margin: 20px auto;
+        background: #1a1a1a;
+        border: 1px solid #000;
+        color: #ddd;
+    }
+    
+    .manage-header {
+        background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .manage-body {
+        padding: 20px;
+        background: #222;
+    }
+    
+    .manage-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #fff;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    .manage-input {
+        padding: 6px;
+        width: 120px;
+        background: #111;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    
+    .manage-btn {
+        background: linear-gradient(to bottom, #bd362f, #a90329); /* Red gradient */
+        color: white;
+        border: 1px solid #800;
+        padding: 6px 15px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .manage-btn:hover {
+        background: #d00;
+        text-decoration: none;
+    }
+
+    /* Small button for table */
+    .btn-small {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+    
+    .manage-link {
+        color: #aaa;
+        font-size: 11px;
+        text-decoration: none;
+    }
+    .manage-link:hover { color: #fff; text-decoration: underline; }
+    
+    /* flash styling → global style.css (.alert-success / .alert-error) */
+
+    .menu-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .menu-table th { background: #333; text-align: left; padding: 8px; color: #fff; font-size: 12px; }
+    .menu-table td { padding: 8px; border-bottom: 1px solid #333; color: #ccc; font-size: 12px; }
+</style>
+
+<div class="manage-container">
+    <div class="manage-header">Étterem Kezelése: {{ restaurant.name_hu }}</div>
+
+    <div class="manage-body">
+
+        <!-- Statisztika -->
+        <div class="manage-stats">
+            <div class="manage-stats-title">Statisztika</div>
+            <div class="manage-stat-row">
+                <span class="stat-label">Összes bevétel:</span>
+                <span class="stat-value text-green">${{ restaurant.total_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            <div class="manage-stat-row">
+                <span class="stat-label">Látogatások száma:</span>
+                <span class="stat-value">{{ restaurant.total_uses|default(0)|number_format(0,',','.') }} alkalom</span>
+            </div>
+            {% if restaurant.payout_mode != 'instant' %}
+            <div class="manage-stat-row" style="margin-top:5px; padding-top:5px; border-top:1px dashed #333;">
+                <span class="stat-label">Jelenlegi felhalmozott bevétel:</span>
+                <span class="stat-value text-yellow">${{ restaurant.pending_revenue|default(0)|number_format(0,',','.') }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Globális Beállítások -->
+        <form action="/etterem/frissites" method="POST" style="margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 20px;">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="building_id" value="{{ restaurant.id }}">
+            
+
+
+            <div class="mb-20">
+                <label class="manage-label">Kifizetés módja:</label>
+                <select name="payout_mode" class="manage-input" style="width: 100%;">
+                    <option value="instant" {% if restaurant.payout_mode == 'instant' %}selected{% endif %}>Azonnali (Minden evéskor)</option>
+                    <option value="daily" {% if restaurant.payout_mode == 'daily' %}selected{% endif %}>Napi (Éjfélkor)</option>
+                    <option value="weekly" {% if restaurant.payout_mode == 'weekly' %}selected{% endif %}>Heti (Vasárnap éjfélkor)</option>
+                </select>
+                <div class="manage-hint">Mikor kerüljön jóváírásra a számládon.</div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="manage-btn" hx-disabled-elt="this">BEÁLLÍTÁSOK MENTÉSE</button>
+            </div>
+        </form>
+
+        <!-- Menü Kezelése -->
+        <div class="manage-stats">
+            <div class="manage-stats-title">Menü kínálat</div>
+            <table class="menu-table">
+                <thead>
+                    <tr>
+                        <th>Étel Neve</th>
+                        <th>Ár ($)</th>
+                        <th>Energia (%)</th>
+                        <th>Művelet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in menu %}
+                    <tr>
+                        <form action="/etterem/frissites" method="POST">
+                            <input type="hidden" name="csrf_name" value="{{ csrf.name }}">
+                            <input type="hidden" name="csrf_value" value="{{ csrf.value }}">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            
+                            <td>{{ item.name }}</td>
+                            <td><input type="number" name="price" value="{{ item.price }}" class="manage-input" style="width: 70px;"></td>
+                            <td><input type="number" name="energy" value="{{ item.energy }}" class="manage-input" style="width: 70px;"></td>
+                            <td><button type="submit" class="manage-btn btn-small" hx-disabled-elt="this">MENTÉS</button></td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="manage-footer">
+             <a href="/etterem" class="manage-link">&laquo; Vissza az étterembe</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

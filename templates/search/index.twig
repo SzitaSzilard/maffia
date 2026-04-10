@@ -1,0 +1,168 @@
+{% extends layout %}
+
+{% block content %}
+<style>
+    .search-box-container {
+        position: relative;
+        margin-bottom: 30px;
+        padding: 10px;
+    }
+    .search-white-box {
+        background: #fff; 
+        border: 1px solid #ccc; /* Maybe darker border? */
+        border-radius: 2px;
+        padding: 20px; 
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        position: relative;
+        z-index: 2;
+    }
+    /* Simple paper effect or shadow behind it? Screenshot shows a shadow underneath */
+    .search-shadow {
+        position: absolute;
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        height: 20px;
+        background: transparent;
+        box-shadow: 0 15px 15px rgba(0,0,0,0.5);
+        z-index: 1;
+        border-radius: 50%; /* Curved shadow effect */
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        margin-top: 20px;
+        border: 1px solid #000;
+    }
+    .results-table th {
+        background: linear-gradient(to bottom, #f0f0f0, #e0e0e0); /* Or white? Screenshot headers look standard NetMafia header-ish or just bold text? */
+        /* Wait, screenshot 2 shows a DARK header for "Találatok" and then the table headers are WHITE/Light Gray? */
+        /* Actually table headers are white/light gray background with Bold Text and sort arrows. */
+        background-color: #fff;
+        border: 1px solid #999;
+        padding: 4px;
+        text-align: left;
+        font-weight: bold;
+    }
+    .results-table td {
+        background-color: #e6e6e6;
+        border: 1px solid #999;
+        padding: 4px;
+    }
+    .search-form-label {
+        text-align: right;
+        padding-right: 5px;
+        font-size: 11px;
+    }
+    .search-form-input {
+        width: 200px;
+        border: 1px solid #ccc;
+        font-size: 11px;
+        padding: 4px;
+        border-radius: 3px;
+        outline: none;
+    }
+    .search-form-select {
+        width: 156px;
+        border: 1px solid #ccc;
+        font-size: 11px;
+        padding: 4px;
+        border-radius: 3px;
+        outline: none;
+    }
+    .error-msg {
+        background: #3c1212;
+        color: #ff9999;
+        font-weight: bold;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #662222;
+        border-radius: 3px;
+        font-size: 12px;
+        text-align: center;
+    }
+</style>
+
+<!-- Keresés Header -->
+<div class="content-header-dark mb-20">Keresés</div>
+
+<!-- Keresés Form Box -->
+<div class="search-box-container">
+    <div class="search-white-box">
+
+        <form method="get" action="/gengszter-kereses">
+            <div style="font-weight: normal; margin-bottom: 15px; font-size: 12px; color: #000;">Gengszter keresése</div>
+            
+            <table align="center" class="mx-auto">
+                <tr>
+                    <td class="search-form-label">Státusza:</td>
+                    <td class="text-left">
+                        <select name="status" class="search-form-select">
+                            <option value="alive" {% if searched_status == 'alive' %}selected{% endif %}>élő</option>
+                            <option value="dead" {% if searched_status == 'dead' %}selected{% endif %}>halott</option>
+                            <option value="all" {% if searched_status == 'all' %}selected{% endif %}>mind</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="search-form-label">Felhasználónév:</td>
+                    <td class="text-left">
+                        <input type="text" name="username" value="{{ searched_username }}" class="search-form-input" placeholder="Név...">
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center" style="padding-top: 15px;">
+                        <button type="submit" class="btn btn-submit" hx-disabled-elt="this">Keresés</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <!-- Shadow effect div -->
+    <div class="search-shadow"></div>
+</div>
+
+{% if is_search %}
+    <!-- Találatok Header -->
+    <div class="content-header-dark" style="margin-top: 30px; margin-bottom: 0;">Találatok ({{ result_count }} db)</div>
+    
+    <!-- Table -->
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Felhasználónév ⬍</th>
+                <th style="width: 25%;">Rang ⬍</th>
+                <th style="width: 25%;">Banda ⬍</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in results %}
+                <tr>
+                    <td>
+                        <a href="#" hx-get="/{{ res.username }}" hx-target="#game-content" hx-push-url="true" style="color: #000; text-decoration: underline; font-weight: bold;">
+                            {{ res.username }}
+                        </a>
+                    </td>
+                    <td>{{ res.rank_name }}</td>
+                    <td>{{ res.gang_name }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3" class="text-center p-10" style="font-style: italic; {% if error %}color: #c00; font-weight: bold;{% endif %}">
+                        {% if error %}
+                            ⚠️ {{ error }}
+                        {% else %}
+                            Nincs találat.
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% endblock %}
+

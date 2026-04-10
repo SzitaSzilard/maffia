@@ -1,0 +1,109 @@
+{% extends is_ajax ? 'layouts/ajax.twig' : 'layouts/base_game.twig' %}
+
+{% block title %}e-Bűnözés{% endblock %}
+
+{% block content %}
+<style>
+/* e-Bűnözés Specifikus (Kőbe vésett arányok) */
+#ecrime-top-box {
+    height: var(--ecrime-top-height);
+    overflow: hidden;
+}
+
+#ecrime-bottom-box {
+    height: var(--ecrime-bottom-height);
+    overflow: hidden;
+}
+
+.ecrime-header-box {
+    border: 1px solid #666;
+    background-color: #333;
+    padding: 0;
+    margin-bottom: 20px;
+}
+.ecrime-title-bar {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+}
+.ecrime-image {
+    width: 100%;
+    display: block;
+    height: 250px;
+    object-fit: cover;
+    border-bottom: 2px solid #555;
+}
+.ecrime-image-fallback {
+    width: 100%;
+    height: 150px;
+    background-color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-weight: bold;
+    font-size: 18px;
+    border-bottom: 2px solid #666;
+}
+.ecrime-desc-box {
+    background-color: #eee;
+    padding: 15px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #222;
+    border-top: 1px solid #fff;
+    text-align: justify;
+}
+</style>
+
+<div class="row">
+    <div class="col-md-12" style="max-width: 600px; margin: 0 auto;">
+
+        {# Golden Standard Minta alapján: Felső Menüsor #}
+        <div class="mod-top-menu">
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'atveresek' %}active{% endif %}"
+               hx-get="/e-bunozes/atveresek" hx-target="#game-content" hx-push-url="true">
+                Átverések
+            </a>
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'hackeles' %}active{% endif %}"
+               hx-get="/e-bunozes/hackeles" hx-target="#game-content" hx-push-url="true">
+                Hackelés
+            </a>
+            <a href="#" class="mod-top-menu-item {% if active_tab == 'bolt' %}active{% endif %}"
+               hx-get="/e-bunozes/bolt" hx-target="#game-content" hx-push-url="true">
+                Számítógép bolt
+            </a>
+        </div>
+
+        {% if active_tab != 'bolt' and active_tab != 'hackeles' and user.has_laptop %}
+        {# Golden Standard Minta alapján: Fő Doboz (Statikus leírás) #}
+        <div class="mod-content-box" id="ecrime-top-box">
+            <div class="mod-box-header">e-Bűnözés</div>
+            <div class="mod-box-image">
+                <img src="/images/hacker.png" alt="Hacker a gép előtt">
+            </div>
+            <div class="mod-box-text">
+                <p>Az úgynevezett "social engineering" gyakran használt bűnözési forma, az Átverésekkel lehetőséged van gyakorolni az embereket meghackelni, manipulálni, ezáltal jól fejlesztheted a bűnözői tapasztalatodat, és közben kereshetsz vele egy kis pénzt is.</p>
+                <p>A Hackelés almenüben található a klasszikus számítógépes hackerkedés, ahol nagyobb időbefektetésre van szükség, először egy saját vírust kell kifejleszteni, utána lehet a vírussal számítógépek tömegeit megfertőzni, kiépítve ezzel egy zombihálózatot, végül a fertőzött eszközökön keresztül szedhetőek be nagyobb pénzösszegek.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ALMODULOK BEÖMLŐ PONTJA (Ezek is mod-content-box formában jelennek meg a Twig file-okban) #}
+        <div id="ecrime-content">
+            {% if active_tab == 'atveresek' %}
+                {% include 'game/ecrime/_scams.twig' %}
+            {% elseif active_tab == 'hackeles' %}
+                {% include 'game/ecrime/_hacking.twig' %}
+            {% elseif active_tab == 'bolt' %}
+                {% include 'game/ecrime/_pcbolt.twig' %}
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends is_ajax ? "layouts/ajax.twig" : "layouts/base_game.twig" %}
+
+{% block content %}
+<style>
+    .garage-container { text-align: center; }
+    .garage-header { background-color: #dcdcdc; padding: 10px; border: 1px solid #aaa; margin-bottom: 15px; }
+    .garage-header h3 { margin: 0; padding: 5px; }
+    .garage-status { margin-top: 10px; }
+    .warning-text { color: #c00; font-weight: bold; }
+    .expand-link { margin-top: 10px; }
+    
+    .vehicles-table { width: 100%; border-collapse: collapse; border: 1px solid #999; background-color: #eee; font-size: 11px; }
+    .vehicles-table thead { background: linear-gradient(to bottom, #f0f0f0, #d0d0d0); border-bottom: 2px solid #999; }
+    .vehicles-table th { padding: 5px; border-right: 1px solid #999; text-align: left; }
+    .vehicles-table td { padding: 5px; border-right: 1px solid #ccc; }
+    .vehicles-table td:last-child { border-right: none; }
+    .vehicles-table tr { border-bottom: 1px solid #ccc; }
+    .vehicles-table tr:nth-child(even) { background-color: #e6e6e6; }
+    .vehicles-table tr:nth-child(odd) { background-color: #f2f2f2; }
+    
+    .vehicle-link { color: #a00; font-weight: bold; text-decoration: none; }
+    .default-marker { color: red; }
+    .garage-label { color: #080; }
+    .street-label { color: #c00; font-weight: bold; }
+    .no-vehicles { padding: 10px; text-align: center; }
+    
+    .legend { margin-top: 5px; font-size: 10px; color: #555; }
+    .action-buttons { margin-top: 15px; }
+    .action-buttons button { margin: 2px; }
+    .help-text { margin-top: 10px; font-style: italic; color: #666; font-size: 10px; }
+
+    /* Tooltip styles */
+    .disabled-link { color: #999; cursor: not-allowed; text-decoration: none; position: relative; border-bottom: 1px dotted #999; }
+    .tooltip { position: relative; display: inline-block; }
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 200px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%; /* Position above */
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+        font-weight: normal;
+        border: 1px solid #000;
+    }
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #555 transparent transparent transparent;
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+</style>
+
+<div id="garage-container-wrapper" hx-get="/garazs/partials/container?sort={{ current_sort }}&dir={{ current_dir }}" hx-trigger="refreshGarage from:body" hx-swap="innerHTML">
+    {% include 'garage/_garage_container.twig' %}
+</div>
+
+<!-- Simple Modal -->
+<div id="vehicle-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: relative; width: 600px; margin: 100px auto; background: #fff; border: 2px solid #000; padding: 0;">
+        <div style="text-align: right; background: #000; padding: 2px;">
+            <span style="color: #fff; cursor: pointer; padding: 0 5px; font-weight: bold;" onclick="document.getElementById('vehicle-modal').style.display='none'">X</span>
+        </div>
+        <div id="modal-body" style="padding: 10px;">
+            <!-- Content loaded via HTMX -->
+            Betöltés...
+        </div>
+    </div>
+</div>
+
+{% endblock %}

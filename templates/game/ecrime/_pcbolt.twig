@@ -1,0 +1,185 @@
+<style>
+.pcbolt-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+    background-color: #f9f9f9;
+    margin-bottom: 10px;
+}
+.pcbolt-info {
+    flex: 1;
+    padding-right: 20px;
+}
+.pcbolt-image-ph {
+    width: 200px;
+    height: 120px;
+    background-color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #888;
+    border: 1px dashed #aaa;
+    font-size: 12px;
+}
+.pcbolt-title {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+.pcbolt-desc {
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: #444;
+}
+.pcbolt-price {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.pcbolt-header-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding: 0 15px;
+}
+.pcbolt-header-left {
+    flex: 1;
+    text-align: center;
+}
+.pcbolt-header-right {
+    width: 200px;
+    text-align: center;
+}
+.pcbolt-btn {
+    background-color: #e0e0e0;
+    border: 1px solid #888;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.pcbolt-btn:hover:not(:disabled) {
+    background-color: #ccc;
+}
+.pcbolt-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.bought-text {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+}
+</style>
+
+<div class="pcbolt-header-row">
+    <div class="pcbolt-header-left">Leírás</div>
+    <div class="pcbolt-header-right">Kép:</div>
+</div>
+
+<!-- Laptop -->
+<div class="pcbolt-item">
+    <div class="pcbolt-info">
+        <div class="pcbolt-title">Laptop: <span style="font-weight: normal;">Alapvető eszköz e-Bűnözéshez és különböző hackelésekhez</span></div>
+        <div class="pcbolt-price">Ár: $30,000</div>
+        <div style="text-align: center; margin-top: 15px;">
+            {% if user.has_laptop %}
+                <span class="bought-text">Már megvetted</span>
+            {% else %}
+                <form method="POST" action="/e-bunozes/shop">
+                    {{ csrf.keys|raw }}
+                    <input type="hidden" name="action" value="buy_laptop">
+                    <button type="submit" class="pcbolt-btn">Megveszem</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pcbolt-image-ph">Nincs kép feltöltve</div>
+</div>
+
+<!-- Perifériák -->
+<div class="pcbolt-item">
+    <div class="pcbolt-info">
+        <div class="pcbolt-title">Perifériák: <span style="font-weight: normal;">Laptophoz bővítési lehetőség monitorral, egérrel és billentyűzettel a gyorsabb vírus fejlesztéshez (30%-al kisebb várakozási idő vírus fejlesztésnél)</span></div>
+        <div class="pcbolt-price">Ár: 4 kredit</div>
+        <div style="text-align: center; margin-top: 15px;">
+            {% if has_peripherals %}
+                <span class="bought-text">Már megvetted</span>
+            {% elseif not user.has_laptop %}
+                <button type="button" class="pcbolt-btn" disabled title="Előbb vásárolj laptopot!">Megveszem</button>
+            {% else %}
+                <form method="POST" action="/e-bunozes/shop">
+                    {{ csrf.keys|raw }}
+                    <input type="hidden" name="action" value="buy_peripherals">
+                    <button type="submit" class="pcbolt-btn">Megveszem (4 kredit)</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pcbolt-image-ph">Nincs kép feltöltve</div>
+</div>
+
+<!-- Webszerver bérlés -->
+<div class="pcbolt-item">
+    <div class="pcbolt-info">
+        <div class="pcbolt-title">Webszerver bérlés: <span style="font-weight: normal;">Adathalász SMS küldése tevékenységhez szükséges</span></div>
+        <div class="pcbolt-price">Havidíj: $20,000</div>
+        <div style="text-align: center; margin-top: 15px;">
+            {% if webserver_active %}
+                <span class="bought-text">
+                    Bérelve még: 
+                    {% if webserver_days_left > 0 %}
+                        <span style="color: #d32f2f;">{{ webserver_days_left }} napig</span>
+                    {% else %}
+                        <span style="color: #d32f2f;" id="webserver-timer">számítás...</span>
+                        <script>
+                        (function() {
+                            let targetTs = {{ webserver_expire_timestamp }};
+                            function updateWSTimer() {
+                                const timerEl = document.getElementById('webserver-timer');
+                                if (!timerEl) return;
+                                let now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                                          ? window.NetMafia.now() 
+                                          : Math.floor(Date.now() / 1000);
+                                let remaining = targetTs - now;
+                                if (remaining <= 0) {
+                                    timerEl.textContent = 'Lejárt!';
+                                    setTimeout(() => window.location.reload(), 1000);
+                                    return;
+                                }
+                                const h = Math.floor(remaining / 3600);
+                                const m = Math.floor((remaining % 3600) / 60);
+                                const s = remaining % 60;
+                                timerEl.textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                                setTimeout(updateWSTimer, 1000);
+                            }
+                            updateWSTimer();
+                        })();
+                        </script>
+                    {% endif %}
+                </span>
+            {% else %}
+                <form method="POST" action="/e-bunozes/shop">
+                    {{ csrf.keys|raw }}
+                    <input type="hidden" name="action" value="buy_webserver">
+                    <button type="submit" class="pcbolt-btn">Kibérlem 1 hónapra</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pcbolt-image-ph">Nincs kép feltöltve</div>
+</div>
+
+<!-- Szerverpark bérlés -->
+<div class="pcbolt-item">
+    <div class="pcbolt-info">
+        <div class="pcbolt-title">Szerverpark bérlés: <span style="font-weight: normal;">IP címek tömeges szkennelése tevékenységhez szükséges</span></div>
+        <div class="pcbolt-price">Havidíj: 2 kredit</div>
+        <div style="text-align: center; margin-top: 15px;">
+            <button type="button" class="pcbolt-btn" disabled>Kibérlem 1 hónapra</button>
+        </div>
+    </div>
+    <div class="pcbolt-image-ph">Nincs kép feltöltve</div>
+</div>

@@ -1,0 +1,424 @@
+<style>
+    .hack-container {
+        width: 100%;
+        max-width: var(--mod-box-width);
+        margin: 0 auto;
+        color: #222;
+        font-family: Arial, sans-serif;
+        padding-top: 0;
+    }
+
+    .hack-panel {
+        background-color: #f2f2f2;
+        border: 1px solid #111;
+        margin-bottom: 15px;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .hack-panel-header {
+        background-color: #383838;
+        color: #ffffff;
+        font-size: 14px;
+        text-align: center;
+        padding: 7px;
+        border-bottom: 1px solid #111;
+        font-weight: bold;
+    }
+
+    .hack-panel-body {
+        padding: 10px;
+    }
+
+    .hack-container p {
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+    }
+
+    .italic {
+        font-style: italic;
+    }
+
+    /* 1. Panel: Lista stílusok */
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 15px 0;
+    }
+
+    .feature-list li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 6px;
+    }
+
+    .feature-list .dot {
+        color: #d11a1a;
+        font-size: 11px;
+        margin-right: 8px;
+        margin-top: 2px;
+    }
+
+    .feature-list .text-content {
+        flex: 1;
+        font-size: 12px;
+    }
+
+    /* Gombok stílusa */
+    .hack-btn-container {
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .hack-btn {
+        background: linear-gradient(to bottom, #fafafa, #e0e0e0);
+        border: 1px solid #777;
+        padding: 4px 12px;
+        font-family: inherit;
+        font-size: 13px;
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .hack-btn:hover {
+        background: linear-gradient(to bottom, #fff, #ebebeb);
+    }
+
+    /* Táblázat stílusok a 2. és 3. panelhez */
+    .hack-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .hack-table th, .hack-table td {
+        border-bottom: 1px solid #111;
+        border-right: 1px solid #111;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: middle;
+        font-size: 12px;
+    }
+
+    .hack-table th {
+        font-weight: bold;
+        background-color: #e8e8e8;
+    }
+
+    /* Clean up edge borders to prevent "double border" effect with the panel */
+    .hack-table th:last-child,
+    .hack-table td:last-child {
+        border-right: none;
+    }
+
+    .hack-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* 2. Panel specifikus táblázat */
+    .panel-2-table td:last-child,
+    .panel-2-table th:last-child {
+        text-align: center;
+        width: 55px;
+    }
+
+    /* 3. Panel specifikus stílusok */
+    .status-bar {
+        padding: 8px 10px;
+        border-bottom: 1px solid #111;
+        background-color: #e8e8e8;
+        font-size: 12px;
+    }
+
+    .panel-3-table tr:last-child td {
+        border-bottom: none;
+        text-align: center;
+        font-weight: bold;
+        background-color: #f2f2f2;
+        padding: 12px;
+    }
+
+    /* Rádiógombok és címkék elrendezése */
+    .radio-label {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+    }
+
+    .radio-label input[type="radio"] {
+        margin: 2px 8px 0 0;
+        cursor: pointer;
+    }
+
+    /* Áthúzott és kikapcsolt szöveg stílusa */
+    .disabled-strike {
+        color: #a34343;
+        text-decoration: line-through;
+    }
+    /* flash styling → global style.css (.alert-success / .alert-error) */
+    .dot-green {
+        color: #2e7d32 !important;
+    }
+</style>
+
+<div class="hack-container">
+
+    {% if hack_result %}
+        <div class="{% if hack_result.success %}alert-success{% else %}alert-error{% endif %}" style="margin: 0 0 15px 0;">
+            <strong>{% if hack_result.success %}SIKERES FEJLESZTÉS{% else %}HIBA{% endif %}</strong><br>
+            {{ hack_result.message }}
+        </div>
+    {% endif %}
+
+    {% if decay_applied > 0 %}
+        <div class="alert-error" style="margin: 0 0 15px 0;">
+            <strong>⚠ VÍRUS DEGRADÁLÓDOTT</strong><br>
+            Mivel nem fejlesztetted a vírusodat az elmúlt 24+ órában, a fejlettségi szint <strong>-{{ decay_applied }}%</strong>-ot csökkent. Fejleszd naponta, hogy ne veszítsd el a munkádat!
+        </div>
+    {% endif %}
+
+    <div class="hack-panel">
+        <div class="hack-panel-header">Saját vírus fejlesztése</div>
+        <div class="hack-panel-body">
+            <p>Jelenlegi fejlettség: <strong>{{ virus_progress|default(0) }}%</strong></p>
+            <p class="italic">Megadott % elérése után érhető el az adott funkció.</p>
+            
+            <ul class="feature-list">
+                <li>
+                    <span class="dot{% if virus_progress >= 10 %} dot-green{% endif %}">●</span>
+                    <div class="text-content">
+                        <strong>Alapvető működés</strong> - <span class="italic">min. 10% fejlettség szükséges</span><br>
+                        <span class="italic">(Vírus terjesztéséhez szükséges funkciók)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot{% if virus_progress >= 25 %} dot-green{% endif %}">●</span>
+                    <div class="text-content">
+                        <strong>DDoS funkció</strong> - <span class="italic">min. 25% fejlettség szükséges</span><br>
+                        <span class="italic">(Túlterheléses támadási képesség, dark weben árusítható)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot{% if virus_progress >= 50 %} dot-green{% endif %}">●</span>
+                    <div class="text-content">
+                        <strong>Kriptovaluta bányászat funkció</strong> - <span class="italic">min. 50% fejlettség szükséges</span><br>
+                        <span class="italic">(Kibányászott kriptovalutát pénzre lehet váltani)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot{% if virus_progress >= 75 %} dot-green{% endif %}">●</span>
+                    <div class="text-content">
+                        <strong>Keylogger funkció</strong> - <span class="italic">min. 75% fejlettség szükséges</span><br>
+                        <span class="italic">(Billentyűleütéseket naplózza, bankkártya adatok begyűjtéséhez)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="dot{% if virus_progress >= 95 %} dot-green{% endif %}">●</span>
+                    <div class="text-content">
+                        <strong>Zsarolóvírus funkció</strong> - <span class="italic">min. 95% fejlettség szükséges</span><br>
+                        <span class="italic">(Fertőzött számítógép zárolható, feloldásért váltságdíj kérhető)</span>
+                    </div>
+                </li>
+            </ul>
+
+            <p class="italic" style="font-size: 11px;">Minél fejlettebb, összetettebb a vírusod, annál bonyolultabb továbbfejleszteni, emiatt egyre nehezebb az előrelépés.</p>
+            <p class="italic" style="font-size: 11px; margin-bottom: 0;">A szoftverek folyamatos fejlődése miatt szükség van a vírust naponta fejleszteni, ha nem teszed akkor 0.2%-al csökkenni fog a fejlettségi szint naponta.</p>
+            
+            <div class="hack-btn-container">
+                <form method="POST" action="/e-bunozes/hackeles/fejlesztes" style="margin: 0;">
+                    {{ csrf.keys|raw }}
+                    {% if hack_dev_cooldown_remaining > 0 %}
+                        <div style="font-weight: bold; margin-bottom: 5px;">A következő fejlesztésig még várnod kell:</div>
+                        <div id="hack-dev-timer" style="color:#d32f2f; font-weight:bold; font-size: 14px;">számítás...</div>
+                        
+                        <script>
+                        (function() {
+                            let targetTs = {{ hack_dev_cooldown_target }};
+                            
+                            function updateTimer() {
+                                const timerEl = document.getElementById('hack-dev-timer');
+                                if (!timerEl) return;
+
+                                let now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                                          ? window.NetMafia.now() 
+                                          : Math.floor(Date.now() / 1000);
+                                let remaining = targetTs - now;
+
+                                if (remaining <= 0) {
+                                    timerEl.textContent = 'Indulhat!';
+                                    timerEl.style.color = '#388e3c';
+                                    setTimeout(() => window.location.reload(), 1000);
+                                    return;
+                                }
+                                const m = Math.floor(remaining / 60);
+                                const s = remaining % 60;
+                                timerEl.textContent = m + ' perc ' + (s < 10 ? '0' : '') + s + ' másodperc';
+                                window.hackDevTimer = setTimeout(updateTimer, 1000);
+                            }
+                            if (window.hackDevTimer) clearTimeout(window.hackDevTimer);
+                            updateTimer();
+                        })();
+                        </script>
+                    {% else %}
+                        <button type="submit" class="hack-btn" hx-disabled-elt="this">Vírus fejlesztése</button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="hack-panel">
+        {% set can_distribute = (virus_progress >= 10) %}
+        <div class="hack-panel-header">Vírusod terjesztése</div>
+        <form method="POST" action="/e-bunozes/hackeles/terjesztes" style="margin: 0;">
+            {{ csrf.keys|raw }}
+            <table class="hack-table panel-2-table">
+                <thead>
+                    <tr>
+                        <th>Módszer</th>
+                        <th>Esély</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <label class="radio-label">
+                                <input type="radio" name="method" value="1" {% if not can_distribute %}disabled{% endif %} required>
+                                <span {% if not can_distribute %}class="disabled-strike"{% endif %}>Nagyvállalatok, közintézmények rendszereibe való bejutás, majd a vírus telepítése az eszközökre</span>
+                            </label>
+                        </td>
+                        <td><span {% if not can_distribute %}class="disabled-strike"{% endif %}>{{ dist_chances[1]|default(12) }}%</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label class="radio-label">
+                                <input type="radio" name="method" value="2" {% if not can_distribute %}disabled{% endif %} required>
+                                <span {% if not can_distribute %}class="disabled-strike"{% endif %}>Szoftverterjesztő oldal feltörése, majd egy adott szoftver telepítőjébe beépítésével történő terjesztés</span>
+                            </label>
+                        </td>
+                        <td><span {% if not can_distribute %}class="disabled-strike"{% endif %}>{{ dist_chances[2]|default(5) }}%</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label class="radio-label">
+                                <input type="radio" name="method" value="3" {% if not can_distribute %}disabled{% endif %} required>
+                                <span {% if not can_distribute %}class="disabled-strike"{% endif %}>IP címek tömeges szkennelése sebezhető eszközöket keresve<br><span class="italic">(szerverpark bérlés szükséges)</span></span>
+                            </label>
+                        </td>
+                        <td><span {% if not can_distribute %}class="disabled-strike"{% endif %}>{{ dist_chances[3]|default(4) }}%</span></td>
+                    </tr>
+                    <tr>
+                    <td colspan="2">
+                        <div class="hack-btn-container" style="margin-top: 0;">
+                            {% if hack_dev_cooldown_remaining > 0 and can_distribute %}
+                                <div style="font-weight: bold; margin-bottom: 5px;">A következő akcióig még várnod kell:</div>
+                                <div id="hack-dist-timer" style="color:#d32f2f; font-weight:bold; font-size: 14px;">számítás...</div>
+                                <script>
+                                (function() {
+                                    let targetTs = {{ hack_dev_cooldown_target }};
+                                    function updateTimer() {
+                                        const timerEl = document.getElementById('hack-dist-timer');
+                                        if (!timerEl) return;
+                                        let now = (window.NetMafia && typeof window.NetMafia.now === 'function') 
+                                                  ? window.NetMafia.now() 
+                                                  : Math.floor(Date.now() / 1000);
+                                        let remaining = targetTs - now;
+
+                                        if (remaining <= 0) {
+                                            timerEl.textContent = 'Indulhat!';
+                                            timerEl.style.color = '#388e3c';
+                                            return;
+                                        }
+                                        const m = Math.floor(remaining / 60);
+                                        const s = remaining % 60;
+                                        timerEl.textContent = m + ' perc ' + (s < 10 ? '0' : '') + s + ' másodperc';
+                                        window.hackDistTimer = setTimeout(updateTimer, 1000);
+                                    }
+                                    if (window.hackDistTimer) clearTimeout(window.hackDistTimer);
+                                    updateTimer();
+                                })();
+                                </script>
+                            {% else %}
+                                <button type="submit" class="hack-btn" {% if not can_distribute %}disabled style="opacity: 0.5; cursor: not-allowed;" title="Fejlessz a vírusodon (min 10%)!"{% endif %}>Hackelés</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        </form>
+    </div>
+
+    <div class="hack-panel">
+        <div class="hack-panel-header">Zombihálózatod felhasználása</div>
+        <div class="status-bar">
+            Jelenleg <strong>{{ zombie_count|default(0) }} db</strong> fertőzött eszközhöz van hozzáférésed
+        </div>
+        <table class="hack-table panel-3-table">
+            <thead>
+                <tr>
+                    <th>Tevékenységek</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">DDoS funkció aktiválása és dark weben való árusítás</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Kriptovaluta bányászat funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Keylogger funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label class="radio-label">
+                            <input type="radio" disabled>
+                            <span class="disabled-strike">Zsarolóvírus funkció aktiválása</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Nem elérhető egyik funkció sem, fejleszd a vírusodat!</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% if is_ajax %}
+<li id="ecrime-menu-item" class="menu-item-with-tooltip" hx-swap-oob="true">
+    <a href="#" hx-get="/e-bunozes" hx-target="#game-content" hx-push-url="true">
+        e-Bűnözés
+        {% if user.has_ecrime_cooldown or user.has_hack_cooldown %}
+            <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+            <div class="menu-tooltip multi-tooltip" style="padding: 6px; white-space: nowrap; width: max-content;">
+                {% if user.has_ecrime_cooldown %}
+                <div class="multi-cooldown-row" data-cooldown-timestamp="{{ (user.scam_cooldown_until ~ ' UTC')|date('U') }}">
+                    A következő átverésig várnod kell <span class="cooldown-timer timer-text" style="font-weight: bold; margin-left: 3px;">--:--</span>
+                </div>
+                {% endif %}
+                {% if user.has_hack_cooldown %}
+                <div class="multi-cooldown-row" data-cooldown-timestamp="{{ (user.virus_dev_cooldown_until ~ ' UTC')|date('U') }}" {% if user.has_ecrime_cooldown %}style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"{% endif %}>
+                    A következő hackelésig/fejlesztésig várnod kell <span class="cooldown-timer timer-text" style="font-weight: bold; margin-left: 3px;">--:--</span>
+                </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </a>
+</li>
+{% endif %}

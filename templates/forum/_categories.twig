@@ -1,0 +1,95 @@
+    {# Admin: Új kategória form #}
+    {% if user.is_admin %}
+    <div style="width: 100%; text-align: right; margin-bottom: 5px;">
+        <button class="btn btn-sm btn-light border border-secondary" style="font-size: 11px; padding: 2px 8px; border-radius: 2px; cursor: pointer;"
+                onclick="document.getElementById('admin-category-form').style.display = document.getElementById('admin-category-form').style.display === 'none' ? 'block' : 'none';">
+            ✏️ Új kategória
+        </button>
+    </div>
+    <div id="admin-category-form" style="display: none; width: 100%; background: #f5f5f5; border: 1px solid #000; padding: 10px; margin-bottom: 10px;">
+        <form hx-post="/forum/admin/kategoria" hx-target="#forum-alert" hx-swap="innerHTML">
+            {{ csrf.keys|raw }}
+            <div style="margin-bottom: 6px;">
+                <label style="font-size: 12px; font-weight: bold;">Kategória neve:</label>
+                <input type="text" name="name" required style="width: 100%; padding: 4px; border: 1px solid #999; border-radius: 2px; font-size: 13px;">
+            </div>
+            <div style="margin-bottom: 6px;">
+                <label style="font-size: 12px; font-weight: bold;">Leírás:</label>
+                <input type="text" name="description" style="width: 100%; padding: 4px; border: 1px solid #999; border-radius: 2px; font-size: 13px;">
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="font-size: 12px;">
+                    <input type="checkbox" name="is_closed" value="1"> Zárt kategória (csak admin írhat bele)
+                </label>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="font-size: 12px;">
+                    <input type="checkbox" name="is_single_topic" value="1"> Egyetlen topic (a kategória egyből a hozzászólások nézetbe visz)
+                </label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-light border border-secondary" style="font-size: 12px; padding: 3px 12px; border-radius: 2px;" hx-disabled-elt="this">Létrehozás</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div id="forum-alert" style="width: 100%;"></div>
+
+    <table class="forum-table">
+        <tr>
+            <th colspan="4" class="table-title">Fórum</th>
+        </tr>
+        <tr class="col-headers">
+            <th style="width: 45%;">Kategória</th>
+            <th style="width: 15%;">Topikok</th>
+            <th style="width: 15%;">Üzenetek</th>
+            <th style="width: 25%;">Utolsó üzenet</th>
+        </tr>
+        {% for cat in categories %}
+        {% set isActive = category is defined and category.id == cat.id %}
+        <tr style="{% if isActive %}background-color: #d2dee8; box-shadow: inset 4px 0 0 #3b5998;{% endif %}">
+            <td>
+                <a href="#" hx-get="/forum/kategoria/{{ cat.id }}" hx-target="#game-content" hx-push-url="true"
+                   style="{% if isActive %}font-weight: bold; color: #1a3c5a;{% endif %}">{{ cat.name }}</a>
+                {% if cat.is_closed %}🔒{% endif %}
+                {% if cat.is_single_topic %}📌{% endif %}
+                {% if cat.description %}
+                    <span class="desc" style="{% if isActive %}font-weight: bold; color: #333;{% endif %}">{{ cat.description }}</span>
+                {% endif %}
+
+                {% if user.is_admin %}
+                    <div style="font-size: 10px; margin-top: 4px;">
+                        <a href="#" style="color: #888; text-decoration: none;" onclick="var f=document.getElementById('cat-edit-{{ cat.id }}'); f.style.display=f.style.display==='none'?'block':'none'; return false;">[Szerkesztés]</a>
+                        <a href="#" style="color: #c00; text-decoration: none;" data-cat-name="{{ cat.name }}" onclick="showDeleteModal('Biztosan törlöd a \'' + this.getAttribute('data-cat-name') + '\' kategóriát és MINDEN tartalmát?', 'cat-del-{{ cat.id }}'); return false;">[Törlés]</a>
+                        <form id="cat-del-{{ cat.id }}" hx-post="/forum/admin/kategoria-torles" hx-target="#forum-alert" hx-swap="innerHTML" style="display:none;">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="id" value="{{ cat.id }}">
+                        </form>
+                    </div>
+                    <div id="cat-edit-{{ cat.id }}" style="display: none; margin-top: 4px; padding: 6px; background: #fff; border: 1px solid #ccc; text-align: left;">
+                        <form hx-post="/forum/admin/kategoria-szerkesztes" hx-target="#forum-alert" hx-swap="innerHTML">
+                            {{ csrf.keys|raw }}
+                            <input type="hidden" name="id" value="{{ cat.id }}">
+                            <input type="text" name="name" value="{{ cat.name }}" style="width: 100%; padding: 3px; border: 1px solid #999; font-size: 12px; margin-bottom: 4px;">
+                            <input type="text" name="description" value="{{ cat.description }}" placeholder="Leírás" style="width: 100%; padding: 3px; border: 1px solid #999; font-size: 12px; margin-bottom: 4px;">
+                            <label style="font-size: 11px;"><input type="checkbox" name="is_closed" value="1" {{ cat.is_closed ? 'checked' : '' }}> Zárt</label>
+                            <button type="submit" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" hx-disabled-elt="this">Mentés</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </td>
+            <td style="{% if isActive %}font-weight: bold; color: #1a3c5a;{% endif %}">{{ cat.topic_count }}</td>
+            <td style="{% if isActive %}font-weight: bold; color: #1a3c5a;{% endif %}">{{ cat.post_count }}</td>
+            <td style="{% if isActive %}font-weight: bold; color: #333;{% endif %}">
+                {% if cat.last_post_at %}
+                    {{ cat.last_post_at }}<br>{{ cat.last_post_username }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">Még nincs kategória.</td>
+        </tr>
+        {% endfor %}
+    </table>

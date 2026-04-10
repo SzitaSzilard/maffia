@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NetMafia - {{ page_title|default('Játék') }}</title>
+    <link rel="stylesheet" href="/css/style.css?v={{ "now"|date("U") }}">
+    <link rel="preload" href="/images/bg_pattern.jpg" as="image">
+    {% block stylesheets %}{% endblock %}
+    <style>
+        @keyframes badgeFadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes colorFadeOut {
+            0% { color: #ff4444; }
+            100% { color: inherit; }
+        }
+        @keyframes afterFadeOut {
+            0% { opacity: 1; color: #ff4444; }
+            100% { opacity: 0; color: inherit; }
+        }
+        .badge-fading {
+            animation: badgeFadeOut 3s ease-out forwards !important;
+            pointer-events: none;
+        }
+        .oc-menu-highlight {
+            color: #ff4444 !important;
+        }
+        .oc-menu-highlight::after {
+            content: " (!)";
+        }
+        .oc-menu-fade {
+            animation: colorFadeOut 3s ease-out forwards;
+        }
+        .oc-menu-fade::after {
+            content: " (!)";
+            animation: afterFadeOut 3s ease-out forwards;
+        }
+    </style>
+    
+    {# CSRF Token Meta Tags for HTMX #}
+    {% if csrf is defined %}
+    <meta id="csrf-name-key" name="csrf-name-key" content="{{ csrf.nameKey }}">
+    <meta id="csrf-name" name="csrf-name" content="{{ csrf.name }}">
+    <meta id="csrf-value-key" name="csrf-value-key" content="{{ csrf.valueKey }}">
+    <meta id="csrf-value" name="csrf-value" content="{{ csrf.value }}">
+    {% endif %}
+    
+    {# Szerveridő a kliens órájának szinkronizálásához #}
+    <meta name="server-time" content="{{ "now"|date("U") }}">
+
+
+    <script src="/js/htmx.min.js"></script>
+    <script src="/js/realtime.js"></script>
+    <script src="/js/sleep_timer.js?v=20252912048"></script>
+    <script src="/js/badges.js?v={{ "now"|date("U") }}"></script>
+    
+    <script>
+        // ========================================================
+        // Global Synced Clock System
+        // ========================================================
+        window.NetMafia = window.NetMafia || {};
+        document.addEventListener('DOMContentLoaded', function() {
+            var serverTimeMeta = document.querySelector('meta[name="server-time"]');
+            var serverTime = serverTimeMeta ? parseInt(serverTimeMeta.content, 10) : Math.floor(Date.now() / 1000);
+            var clientTimeAtLoad = Math.floor(Date.now() / 1000);
+            window.NetMafia.timeOffset = serverTime - clientTimeAtLoad;
+            
+            // Returns the current accurate server time in seconds
+            window.NetMafia.now = function() {
+                return Math.floor(Date.now() / 1000) + window.NetMafia.timeOffset;
+            };
+
+            function updateCooldownTimers() {
+                var now = window.NetMafia.now();
+                var items = document.querySelectorAll('.menu-item-with-tooltip, .multi-cooldown-row');
+                
+                items.forEach(function(item) {
+                    var targetTs = parseInt(item.getAttribute('data-cooldown-timestamp'), 10);
+                    if (!targetTs || targetTs <= 0) return;
+                    
+                    if (targetTs > now) {
+                        var diff = targetTs - now;
+                        var m = Math.floor(diff / 60);
+                        var s = diff % 60;
+                        var h = Math.floor(m / 60);
+                        m = m % 60;
+                        
+                        // Option for textual display similar to user screenshot "X perc Y másodperc" vs fallback "MM:SS"
+                        var isTextual = item.classList.contains('multi-cooldown-row');
+                        var formatted = "";
+                        
+                        if (isTextual) {
+                             if (h > 0) formatted += h + " óra ";
+                             if (m > 0) formatted += m + " perc ";
+                             formatted += s + " másodpercet";
+                        } else {
+                            if (h > 0) {
+                                formatted += h + ':';
+                            }
+                            formatted += (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                        }
+                        
+                        var timerSpan = item.querySelector('.cooldown-timer');
+                        if (timerSpan) {
+                            timerSpan.textContent = formatted;
+                        }
+                    } else {
+                        // Cooldown lejárt
+                        item.setAttribute('data-cooldown-timestamp', '0');
+                        
+                        if (item.classList.contains('multi-cooldown-row')) {
+                            var parentTooltip = item.closest('.menu-tooltip');
+                            item.remove();
+                            if (parentTooltip && parentTooltip.querySelectorAll('.multi-cooldown-row').length === 0) {
+                                var li = parentTooltip.closest('li');
+                                if (li) {
+                                    var svg = li.querySelector('svg[title="Várakozási idő aktív"]');
+                                    if (svg) svg.remove();
+                                }
+                                parentTooltip.remove();
+                            }
+                        } else {
+                            var svg = item.querySelector('svg[title="Várakozási idő aktív"]');
+                            if (svg) svg.remove();
+                            var tooltip = item.querySelector('.menu-tooltip');
+                            if (tooltip) tooltip.remove();
+                        }
+                    }
+                });
+            }
+            setInterval(updateCooldownTimers, 1000);
+            updateCooldownTimers();
+            
+            // HTMX oldalbetöltés/csere után is lefuttatjuk
+            document.body.addEventListener('htmx:afterSettle', updateCooldownTimers);
+        });
+
+        // ========================================================
+        // Stat Animation System (requestAnimationFrame-based)
+        // Animation state lives in JS, NOT in the DOM.
+        // Works regardless of how/when HTMX swaps DOM elements.
+        // ========================================================
+        (function() {
+            var ANIM_DURATION = 4000; // 4 seconds
+            var activeAnims = {};     // { statName: { type: 'down'|'up', start: timestamp } }
+            var animFrameId = null;
+            var userId = {{ user.id|default(0) }};
+
+            // Compare current DOM values with sessionStorage, start animations on change
+            function checkStatsChange() {
+                if (userId === 0) return;
+                var stats = ['money', 'energy', 'health', 'xp', 'bullets', 'credits'];
+
+                for (var i = 0; i < stats.length; i++) {
+                    var stat = stats[i];
+                    var el = document.getElementById('stat-' + stat);
+                    if (!el) continue;
+
+                    var currentValRaw = el.getAttribute('data-value');
+                    if (currentValRaw === null || currentValRaw === '') continue;
+                    var cleanStr = currentValRaw.toString().replace(/[^0-9-]/g, '');
+                    var currentVal = parseInt(cleanStr, 10);
+
+                    var key = 'user_' + userId + '_' + stat;
+                    var prevRaw = sessionStorage.getItem(key);
+
+                    if (prevRaw !== null && prevRaw !== 'NaN') {
+                        var prevVal = parseInt(prevRaw, 10);
+                        if (!isNaN(currentVal) && !isNaN(prevVal) && currentVal !== prevVal) {
+                            activeAnims[stat] = {
+                                type: currentVal < prevVal ? 'down' : 'up',
+                                start: Date.now()
+                            };
+                        }
+                    }
+                    if (!isNaN(currentVal)) {
+                        sessionStorage.setItem(key, currentVal);
+                    }
+                }
+
+                if (Object.keys(activeAnims).length > 0 && !animFrameId) {
+                    animFrameId = requestAnimationFrame(renderAnimations);
+                }
+            }
+
+            // Apply inline styles every frame (survives element replacement)
+            function renderAnimations() {
+                var now = Date.now();
+                var hasActive = false;
+
+                for (var stat in activeAnims) {
+                    var anim = activeAnims[stat];
+                    var el = document.getElementById('stat-' + stat);
+                    if (!el) continue;
+
+                    var progress = Math.min((now - anim.start) / ANIM_DURATION, 1);
+
+                    if (progress >= 1) {
+                        // Animation complete — clear inline styles, restore transition
+                        el.style.transition = '';
+                        el.style.backgroundColor = '';
+                        el.style.color = '';
+                        el.style.boxShadow = '';
+                        el.style.textShadow = '';
+                        el.style.borderRadius = '';
+                        delete activeAnims[stat];
+                        continue;
+                    }
+
+                    hasActive = true;
+                    var fade = 1 - progress; // 1 → 0
+
+                    // Kill CSS transition so it doesn't fight with rAF
+                    el.style.transition = 'none';
+                    el.style.borderRadius = '6px';
+
+                    // Smooth RGB interpolation
+                    var r, g, b;
+                    if (anim.type === 'down') {
+                        // #ff5555 (255,85,85) → #ddd (221,221,221)
+                        r = Math.round(221 + (255 - 221) * fade);
+                        g = Math.round(221 + (85 - 221) * fade);
+                        b = Math.round(221 + (85 - 221) * fade);
+                        el.style.backgroundColor = 'rgba(160,0,0,' + (0.8 * fade).toFixed(3) + ')';
+                        el.style.boxShadow = '0 0 ' + (10 * fade).toFixed(1) + 'px rgba(255,0,0,' + (0.5 * fade).toFixed(3) + ')';
+                    } else {
+                        // #55ff55 (85,255,85) → #ddd (221,221,221)
+                        r = Math.round(221 + (85 - 221) * fade);
+                        g = Math.round(221 + (255 - 221) * fade);
+                        b = Math.round(221 + (85 - 221) * fade);
+                        el.style.backgroundColor = 'rgba(0,160,0,' + (0.8 * fade).toFixed(3) + ')';
+                        el.style.boxShadow = '0 0 ' + (10 * fade).toFixed(1) + 'px rgba(0,255,0,' + (0.5 * fade).toFixed(3) + ')';
+                    }
+                    el.style.color = 'rgb(' + r + ',' + g + ',' + b + ')';
+                    el.style.textShadow = fade > 0.7 ? 'none' : '1px 1px 0 #000';
+                }
+
+                animFrameId = hasActive ? requestAnimationFrame(renderAnimations) : null;
+            }
+
+            // MutationObserver: detects ANY change to header-stats (AJAX, OOB swap, etc.)
+            var statsObserver = new MutationObserver(function() { checkStatsChange(); });
+
+            function observeHeaderStats() {
+                var el = document.getElementById('header-stats');
+                if (el) {
+                    statsObserver.disconnect();
+                    statsObserver.observe(el, { childList: true, subtree: true });
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                checkStatsChange();
+                observeHeaderStats();
+
+                // Trigger header-stats reload on page navigation / shop buy
+                document.body.addEventListener('htmx:afterSwap', function(evt) {
+                    var targetId = evt.detail.target.id;
+                    if (targetId === 'game-content' || targetId === 'flash-container') {
+                        document.body.dispatchEvent(new Event('update-stats'));
+                    }
+                });
+
+                // Re-attach observer after header-stats is replaced (outerHTML/OOB)
+                document.body.addEventListener('htmx:afterSettle', function() {
+                    observeHeaderStats();
+                });
+            });
+        })();
+    </script>
+    
+    {# HTMX CSRF Configuration - automatikus token küldés minden POST kéréssel #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // CSRF token hozzáadása minden HTMX kéréshez
+            document.body.addEventListener('htmx:configRequest', function(evt) {
+                var csrfNameKey = document.querySelector('meta[name="csrf-name-key"]');
+                var csrfName = document.querySelector('meta[name="csrf-name"]');
+                var csrfValueKey = document.querySelector('meta[name="csrf-value-key"]');
+                var csrfValue = document.querySelector('meta[name="csrf-value"]');
+                
+                if (csrfNameKey && csrfName && csrfValueKey && csrfValue) {
+                    // POST kéréseknél hozzáadjuk a CSRF tokeneket a paraméterekhez
+                    if (evt.detail.verb !== 'get') {
+                        evt.detail.parameters[csrfNameKey.content] = csrfName.content;
+                        evt.detail.parameters[csrfValueKey.content] = csrfValue.content;
+                    }
+                }
+            });
+            
+            // ... (rest of the script)
+
+
+
+
+            // Smart Flash Clearing: Clear only when user explicitly navigates via links
+            document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                // evt.detail.elt is the element that triggered the request
+                if (evt.detail.elt && evt.detail.elt.tagName === 'A') {
+                     var container = document.getElementById('flash-container');
+                     if (container && container.innerHTML.trim() !== '') {
+                         // Prevent layout jump: lock height
+                         container.style.height = container.offsetHeight + 'px';
+                         container.style.overflow = 'hidden';
+                         container.innerHTML = '';
+                         // Transition height to 0 smoothly? NO, user wants it gone. 
+                         // But if we keep height, we have empty space.
+                         // User wants "Eltűnik".
+                         // If we remove height, we get Jump.
+                         // Let's animate height to 0?
+                         // container.style.transition = 'height 0.3s';
+                         // setTimeout(() => container.style.height = '0px', 10);
+                         
+                         // Actually, if we just keep the height until new page loads, 
+                         // the "Garage" won't jump. It will sit there. 
+                         // Then new page loads -> New layout.
+                         // This is better.
+                     }
+                     
+                     // Remove "Betöltés..." logic (revert to standard HTMX visibility)
+                     // If we want a subtle indicator, we can add class
+                     // document.body.classList.add('loading-cursor');
+                }
+            });
+            
+            // Reset flash container height after swap
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                 var container = document.getElementById('flash-container');
+                 if (container) {
+                     container.style.height = 'auto'; 
+                 }
+            });
+
+            // Global Notification Handler for HTMX Triggers
+            document.body.addEventListener('notification', function(evt) {
+                var data = evt.detail; // {type: 'error', message: '...'}
+                if (data && data.message) {
+                    var container = document.getElementById('flash-container');
+                    if (container) {
+                         var alertClass = data.type === 'error' ? 'alert-error' : 'alert-success';
+                         var html = '<div class="' + alertClass + '">' + data.message + '</div>';
+                         container.innerHTML = html;
+                    }
+                }
+            });
+        });
+    </script>
+    <script src="/js/alerts.js?v=2"></script>
+</head>
+
+<body class="game-body" style="background-color: #0d0d0d;">
+
+    <div class="wrapper">
+
+        <div class="header-area">
+            <div class="top-bar" id="header-stats" hx-get="/game/user-stats" hx-trigger="update-stats from:body, updateStats from:body" hx-swap="innerHTML">
+                {% include '_partials/user_stats.twig' %}
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- BAL OLDALSÁV -->
+            <aside class="sidebar">
+                <div class="sidebar-inner">
+                    <div class="menu-header">FŐMENÜ</div>
+                <!-- ... menu list omitted for brevity, logic remains same ... -->
+                <ul class="menu-list">
+                    {% if user.is_admin %}
+                    <li><a href="#" hx-get="/adminisztracio" hx-target="#game-content" hx-push-url="true" class="menu-link--admin">Adminisztráció</a></li>
+                    {% endif %}
+                    <li><a href="#" hx-get="/ertesitesek" hx-target="#game-content" hx-push-url="true" onclick="fadeBadge('.notification-badge')">Értesítések{% if unread_notifications > 0 %} <span class="notification-badge menu-badge">({{ unread_notifications }})</span>{% endif %}</a></li>
+                    <li><a href="#" hx-get="/premium" hx-target="#game-content" hx-push-url="true">Premium</a></li>
+                    <li><a href="#" hx-get="/kuldetesek" hx-target="#game-content" hx-push-url="true">Küldetések</a></li>
+                    <li><a href="#" hx-get="/otthon" hx-target="#game-content" hx-push-url="true">Otthon</a></li>
+                    <li>
+                        <a href="#" hx-get="/kuzdelmek" hx-target="#game-content" hx-push-url="true" onclick="fadeBadge('.combat-badge')" {% if user.xp < 600 and not user.is_admin %}style="color: #666;"{% endif %}>
+                            Küzdelmek
+                            {% if unread_combat_count > 0 %}
+                                <span class="combat-badge menu-badge">({{ unread_combat_count }})</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="#" hx-get="/vallalkozas" hx-target="#game-content" hx-push-url="true">Vállalkozás</a></li>
+                    <li><a href="#" hx-get="/adohatosag" hx-target="#game-content" hx-push-url="true">Adóhatóság</a></li>
+                    <li><a href="#" hx-get="/munkakozvetito" hx-target="#game-content" hx-push-url="true">Munkaközvetítő iroda</a></li>
+                    <li><a href="#" hx-get="/tozsde" hx-target="#game-content" hx-push-url="true">Tőzsde</a></li>
+                    <li><a href="#" hx-get="/aukcio" hx-target="#game-content" hx-push-url="true">Aukció</a></li>
+                    <li><a href="#" hx-get="/piac" hx-target="#game-content" hx-push-url="true" {% if user.xp < 200 and not user.is_admin %}style="color: #666;"{% endif %}>Piac</a></li>
+                </ul>
+
+                <div class="menu-header">ORSZÁG</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/bank" hx-target="#game-content" hx-push-url="true">Bank</a></li>
+                    <li id="travel-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{% if user.has_highway_cooldown and user.has_airplane_cooldown %}{{ min(user.travel_cooldown_until_ts, user.airplane_cooldown_until_ts) }}{% elseif user.has_highway_cooldown %}{{ user.travel_cooldown_until_ts }}{% elseif user.has_airplane_cooldown %}{{ user.airplane_cooldown_until_ts }}{% else %}0{% endif %}">
+                        <a href="#" hx-get="/utazas" hx-target="#game-content" hx-push-url="true">
+                            Utazás
+                            {% if user.has_highway_cooldown or user.has_airplane_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">Újra utazhatsz: <span class="cooldown-timer">--:--</span></div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="#" hx-get="/vasarlas" hx-target="#game-content" hx-push-url="true">Vásárlás</a></li>
+                    <li><a href="#" hx-get="/orszagok" hx-target="#game-content" hx-push-url="true">Országok</a></li>
+                    <li id="postal-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{% if postal_next_delivery_ts is defined %}{{ postal_next_delivery_ts }}{% else %}0{% endif %}">
+                        <a href="#" hx-get="/posta" hx-target="#game-content" hx-push-url="true" class="{% if pending_postal is defined and pending_postal > 0 %}postal-menu-highlight{% endif %}" onclick="fadeMenuBackground(this)" {% if user.xp < 600 and not user.is_admin %}style="color: #666;"{% endif %}>
+                            Posta
+                            {% if pending_postal is defined and pending_postal > 0 %}
+                                <svg title="{% if postal_has_incoming %}Csomag érkezik{% else %}Csomag úton{% endif %}" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">{% if postal_has_incoming %}Csomag érkezik:{% else %}Kézbesítésig:{% endif %} <span class="cooldown-timer">--:--</span></div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="#" hx-get="/rendorseg" hx-target="#game-content" hx-push-url="true">Rendőrség</a></li>
+                    <li><a href="#" hx-get="/etterem" hx-target="#game-content" hx-push-url="true">Étterem</a></li>
+                    <li><a href="#" hx-get="/korhaz" hx-target="#game-content" hx-push-url="true">Kórház</a></li>
+                    <li><a href="#" hx-get="/toltenygyar" hx-target="#game-content" hx-push-url="true">Töltény gyár</a></li>
+                    <li><a href="#" hx-get="/loter" hx-target="#game-content" hx-push-url="true">Lőtér</a></li>
+                </ul>
+
+                <div class="menu-header">BŰNÖZÉS</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/emberrablas" hx-target="#game-content" hx-push-url="true">Emberrablás</a></li>
+                    <li id="oc-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{% if user.has_oc_cooldown %}{{ (user.oc_cooldown_until ~ ' UTC')|date('U') }}{% else %}0{% endif %}">
+                        <a href="#" hx-get="/szervezett-bunozes" hx-target="#game-content" hx-push-url="true" class="{% if pending_oc_invites is defined and pending_oc_invites > 0 %}oc-menu-highlight{% endif %}" {% if user.xp < 2500 and not user.is_admin %}style="color: #666;"{% endif %}>
+                            Szervezett bűnözés
+                            {% if user.has_oc_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">Újra próbálkozhatsz: <span class="cooldown-timer">--:--</span></div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="#" hx-get="/megbizasok" hx-target="#game-content" hx-push-url="true">Megbízások</a></li>
+                    <li id="car-theft-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{% if user.has_car_theft_cooldown %}{{ (user.car_theft_cooldown_until ~ ' UTC')|date('U') }}{% else %}0{% endif %}">
+                        <a href="#" hx-get="/autolopas" hx-target="#game-content" hx-push-url="true">
+                            Járműlopás
+                            {% if user.has_car_theft_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">Újra próbálkozhatsz: <span class="cooldown-timer">--:--</span></div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li id="ecrime-menu-item" class="menu-item-with-tooltip">
+                        <a href="#" hx-get="/e-bunozes" hx-target="#game-content" hx-push-url="true">
+                            e-Bűnözés
+                            {% if user.has_ecrime_cooldown or user.has_hack_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip multi-tooltip" style="padding: 6px; white-space: nowrap; width: max-content;">
+                                    {% if user.has_ecrime_cooldown %}
+                                    <div class="multi-cooldown-row" data-cooldown-timestamp="{{ (user.scam_cooldown_until ~ ' UTC')|date('U') }}">
+                                        A következő átverésig várnod kell <span class="cooldown-timer timer-text" style="font-weight: bold; margin-left: 3px;">--:--</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if user.has_hack_cooldown %}
+                                    <div class="multi-cooldown-row" data-cooldown-timestamp="{{ (user.virus_dev_cooldown_until ~ ' UTC')|date('U') }}" {% if user.has_ecrime_cooldown %}style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"{% endif %}>
+                                        A következő hackelésig/fejlesztésig várnod kell <span class="cooldown-timer timer-text" style="font-weight: bold; margin-left: 3px;">--:--</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% set _pc_scan_ts = user.petty_crime_scan_cooldown_until ? (user.petty_crime_scan_cooldown_until ~ ' UTC')|date('U') : 0 %}
+                    {% set _pc_commit_ts = user.petty_crime_commit_cooldown_until ? (user.petty_crime_commit_cooldown_until ~ ' UTC')|date('U') : 0 %}
+                    <li id="kisstilubunozes-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{{ _pc_scan_ts > _pc_commit_ts ? _pc_scan_ts : _pc_commit_ts }}">
+                        <a href="#" hx-get="/kisstilubunozes" hx-target="#game-content" hx-push-url="true">
+                            Kisstílű bűnözés
+                            {% if user.has_petty_crime_scan_cooldown or user.has_petty_crime_commit_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">Újra próbálkozhatsz: <span class="cooldown-timer">--:--</span></div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% set _weed_cd_ts = user.weed_plant_cooldown_until_ts > user.weed_harvest_cooldown_until_ts ? user.weed_plant_cooldown_until_ts : user.weed_harvest_cooldown_until_ts %}
+                    <li id="weed-menu-item" class="menu-item-with-tooltip" data-cooldown-timestamp="{{ _weed_cd_ts }}">
+                        <a href="#" hx-get="/vadkender" hx-target="#game-content" hx-push-url="true" {% if user.xp < 600 and not user.is_admin %}style="color: #666;"{% endif %}>
+                            Vadkender ültetés
+                            {% if user.has_weed_plant_cooldown or user.has_weed_harvest_cooldown %}
+                                <svg title="Várakozási idő aktív" class="menu-cooldown-icon" viewBox="0 0 512 512"><path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"/></svg>
+                                <div class="menu-tooltip">
+                                    {% if user.has_weed_plant_cooldown %}Következő ültetés:{% else %}Betakarítható:{% endif %}
+                                    <span class="cooldown-timer">--:--</span>
+                                </div>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="#" hx-get="/femkereskedelem" hx-target="#game-content" hx-push-url="true">Fémkereskedelem</a></li>
+                    <li><a href="#" hx-get="/kakasviadal" hx-target="#game-content" hx-push-url="true">Kakasviadal</a></li>
+                    <li><a href="#" hx-get="/oromlany" hx-target="#game-content" hx-push-url="true">Örömlány</a></li>
+                    <li><a href="#" hx-get="/boxclub" hx-target="#game-content" hx-push-url="true">Box club</a></li>
+                </ul>
+                </div>
+            </aside>
+
+            <!-- KÖZÉPSŐ TARTALOM -->
+            <main class="content">
+                <div id="flash-container">
+                    {# Server-side flash messages from session (fallback) #}
+                    {% if session_flashes is defined %}
+                        {% for type, message in session_flashes %}
+                            <div class="alert-{{ 'error' in type ? 'error' : 'success' }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                {# Inner wrapper for HTMX Swaps #}
+                <div id="game-content">
+                    {% block content %}
+                        {% include 'game/dashboard.twig' %}
+                    {% endblock %}
+                </div>
+            </main>
+
+            <!-- JOBB OLDALSÁV -->
+            <aside class="sidebar">
+                <div class="sidebar-inner">
+                    <div class="menu-header">KÖZÖSSÉG</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/uzenetek" hx-target="#game-content" hx-push-url="true" onclick="fadeBadge('.unread-badge')">Üzenetek{% if unread_messages > 0 %} <span class="unread-badge menu-badge">({{ unread_messages }})</span>{% endif %}</a></li>
+                    <li><a href="#" hx-get="/banda" hx-target="#game-content" hx-push-url="true">Banda</a></li>
+                    <li><a href="#" hx-get="/online-gengszterek" hx-target="#game-content" hx-push-url="true">Online Gengszterek</a></li>
+                    <li><a href="#" hx-get="/forum" hx-target="#game-content" hx-push-url="true">Fórum</a></li>
+                    <li><a href="#" hx-get="/kocsma" hx-target="#game-content" hx-push-url="true">Kocsma <span class="menu-badge">(!)</span></a></li>
+                    <li><a href="#" hx-get="/helpdesk" hx-target="#game-content" hx-push-url="true">Helpdesk</a></li>
+                    <li><a href="#" hx-get="/gengszter-kereses" hx-target="#game-content" hx-push-url="true">Gengszter keresés</a></li>
+                    <li><a href="#" hx-get="/oldal-ajanlasa" hx-target="#game-content" hx-push-url="true">Oldal ajánlása</a></li>
+                </ul>
+
+                <div class="menu-header">JÁRMŰVEK</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/garazs" hx-target="#game-content" hx-push-url="true">Garázs</a></li>
+                    <li><a href="#" hx-get="/versenyzes" hx-target="#game-content" hx-push-url="true">Versenyzés</a></li>
+                    <li><a href="#" hx-get="/gyakorlopalya" hx-target="#game-content" hx-push-url="true">Gyakorlópálya</a></li>
+                    <li><a href="#" hx-get="/szalonok" hx-target="#game-content" hx-push-url="true">Szalonok</a></li>
+                    <li><a href="#" hx-get="/benzinkut" hx-target="#game-content" hx-push-url="true">Benzinkút</a></li>
+                </ul>
+
+                <div class="menu-header">KASZINÓ</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/poker" hx-target="#game-content" hx-push-url="true">Póker</a></li>
+                    <li><a href="#" hx-get="/kaparos-sorsjegy" hx-target="#game-content" hx-push-url="true">Kaparós sorsjegy</a></li>
+                    <li><a href="#" hx-get="/felkaru-rablo" hx-target="#game-content" hx-push-url="true">Félkarú rabló</a></li>
+                    <li><a href="#" hx-get="/blackjack" hx-target="#game-content" hx-push-url="true">Blackjack</a></li>
+                    <li><a href="#" hx-get="/lotto" hx-target="#game-content" hx-push-url="true">Lottó</a></li>
+                    <li><a href="#" hx-get="/sportfogadas" hx-target="#game-content" hx-push-url="true">Sportfogadás</a></li>
+                </ul>
+
+                <div class="menu-header">PROFILOD</div>
+                <ul class="menu-list">
+                    <li><a href="#" hx-get="/beallitasok" hx-target="#game-content" hx-push-url="true">Beállítások</a></li>
+                    <li><a href="#" hx-get="/baratok" hx-target="#game-content" hx-push-url="true">Barátok szerkesztése</a></li>
+                    <li><a href="#" hx-get="/statisztikak" hx-target="#game-content" hx-push-url="true">Statisztikád</a></li>
+                    <li><a href="#" hx-get="/game" hx-target="#game-content" hx-push-url="true">Főoldal</a></li>
+                    <li><a href="#" hx-get="/szabalyzat" hx-target="#game-content" hx-push-url="true">Szabályzat</a></li>
+                    <li><a href="#" hx-get="/gyik" hx-target="#game-content" hx-push-url="true">Gyik</a></li>
+                    <li>
+                        <form action="/logout" method="POST" id="logout-form" class="hidden">
+                            {{ csrf.keys|raw }}
+                        </form>
+                        <a href="#" onclick="document.getElementById('logout-form').submit(); return false;">Kijelentkezés</a>
+                    </li>
+                </ul>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

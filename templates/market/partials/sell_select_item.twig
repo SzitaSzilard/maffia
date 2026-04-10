@@ -1,0 +1,38 @@
+{% if categoryName %}
+<fieldset class="border border-secondary p-3 mb-4 mt-3 mx-auto" style="max-width: 600px; background-color: #e5e5e5; border-radius: 2px;">
+    <legend class="float-none w-auto px-2 mb-0" style="font-size: 14px; font-weight: bold; color: #333;">Eladni kívánt {{ categoryName|lower }}</legend>
+    
+    {% if availableItems is empty %}
+        <div class="text-danger fw-bold mt-2">Nincs eladható {{ categoryName|lower }} a birtokodban!</div>
+    {% else %}
+        <form hx-post="/piac/eladas/konfigural" hx-target="#sell-configure-container" hx-swap="innerHTML" class="d-flex align-items-center gap-2 mt-2">
+            {{ csrf.keys|raw }}
+            <input type="hidden" name="category" value="{{ category }}">
+            
+            {% if category == 'bullet' or category == 'credit' %}
+                <!-- Nincs szükség ID választóra, csak tudatjuk hogy oké -->
+                <span class="fw-bold">{{ availableItems[0].available }} db elérhető</span>
+                <input type="hidden" name="item_id" value="0">
+            {% else %}
+                <select name="item_id" class="form-select form-select-sm" style="max-width: 250px; border: 1px solid #999; border-radius: 2px;" required>
+                    <option value="" disabled selected>Válassz...</option>
+                    {% for item in availableItems %}
+                        <option value="{{ item.item_id ?? item.id }}">
+                            {{ item.name }} 
+                            {% if item.quantity is defined %}({{ item.quantity }} db){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-light btn-sm border border-secondary text-dark px-3 fw-bold" style="border-radius: 2px;" hx-disabled-elt="this">Tovább</button>
+        </form>
+    {% endif %}
+</fieldset>
+
+<script>
+    // Amikor új kategóriát választanak, a konfigurációs panelt ki kell üríteni
+    document.getElementById('sell-configure-container').innerHTML = '';
+</script>
+{% endif %}
+

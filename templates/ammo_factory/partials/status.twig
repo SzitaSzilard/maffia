@@ -1,0 +1,31 @@
+<div style="margin-bottom: 20px; background: #111; padding: 10px; border: 1px solid #333;">
+    <div class="manage-stats-title">Statisztika</div>
+    
+    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+        <span style="color:#aaa;">Állapot:</span>
+        <span><strong>{% if factory.is_producing %}Termelés alatt... ⚙️{% else %}Áll{% endif %}</strong></span>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+        <span style="color:#aaa;">Készlet:</span>
+        <span style="color:#ddd;">{{ factory.ammo_stock|number_format(0,',','.') }} db</span>
+    </div>
+     <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+        <span style="color:#aaa;">Cél mennyiség:</span>
+        <span style="color:#ddd;">{{ factory.production_target_qty|number_format(0,',','.') }} db</span>
+    </div>
+     <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+        <span style="color:#aaa;">Elkészült:</span>
+        <span style="color:#ddd;">{{ factory.production_completed_qty|number_format(0,',','.') }} db</span>
+    </div>
+     <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+        <span style="color:#aaa;">Napi termelés:</span>
+        <span style="color:#ddd;">{{ factory.daily_production_count|number_format(0,',','.') }} / 2,160,000 db</span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="background: #333; height: 10px; width: 100%; margin-top: 10px; border: 1px solid #555;">
+        {% set percent = factory.production_target_qty > 0 ? (factory.production_completed_qty / factory.production_target_qty * 100) : 0 %}
+        <div style="background: #4f4; height: 100%; width: {{ percent }}%;"></div>
+    </div>
+    <div style="text-align: center; font-size: 10px; color:#aaa;">{{ percent|number_format(1) }}%</div>
+</div>

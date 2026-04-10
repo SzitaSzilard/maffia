@@ -1,0 +1,18 @@
+parameters:
+    # Szigorúsági szint (0-9, ahol 9 a legszigorúbb)
+    # Level 5 jó kiindulás - később emelhetjük 6-ra, majd 8-ra
+    level: 5
+    
+    # Ellenőrizendő útvonalak
+    paths:
+        - src
+        - config
+    
+    # Kizárt útvonalak
+    excludePaths:
+        - vendor
+        - bin  # WebSocket server külön kezeljük (Ratchet dinamikus property-k)
+        
+    # Bootstrap fájl (autoload betöltése)
+    bootstrapFiles:
+        - vendor/autoload.php

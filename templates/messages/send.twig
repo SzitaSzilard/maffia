@@ -1,0 +1,63 @@
+{# Message Send Form #}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    {# HEADER #}
+    <div class="card-header">Üzenet küldés</div>
+
+    {# FORM BODY #}
+    <form method="post" action="/uzenetek/kuldes" class="card-body">
+        {{ csrf.keys|raw }}
+
+        <table class="w-100" style="border-collapse: collapse;">
+            <tr>
+                <td class="text-right text-bold" style="padding: 8px 5px; width: 70px; vertical-align: top;">Kinek:</td>
+                <td style="padding: 8px 5px;">
+                    <input type="text" name="recipient" value="{{ recipient|default('') }}"
+                           placeholder="Felhasználónév..."
+                           maxlength="50" class="form-input" style="width: 200px;" required>
+                </td>
+            </tr>
+            <tr>
+                <td class="text-right text-bold" style="padding: 8px 5px; vertical-align: top;">Üzenet:</td>
+                <td style="padding: 8px 5px;">
+                    <textarea name="body" id="body-input" rows="8"
+                              placeholder="Írd ide az üzeneted..."
+                              maxlength="10000"
+                              oninput="updateCounter('body-input', 'body-counter', 10000)"
+                              class="form-textarea" style="width: 300px;"
+                              required>{{ message_form.body|default('') }}</textarea>
+                    <div id="body-counter" class="text-muted text-right">0/10000</div>
+                </td>
+            </tr>
+        </table>
+
+        <input type="hidden" name="subject" value="{{ message_form.subject|default(prefill_subject|default('Üzenet')) }}">
+
+        <div class="text-center p-10">
+            <button type="submit" class="btn btn-submit" hx-disabled-elt="this">Mehet</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateCounter(inputId, counterId, maxLength) {
+    var input = document.getElementById(inputId);
+    var counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    var current = input.value.length;
+    counter.textContent = current + '/' + maxLength;
+    if (current >= maxLength * 0.9) {
+        counter.style.color = '#e74c3c';
+    } else if (current >= maxLength * 0.75) {
+        counter.style.color = '#f39c12';
+    } else {
+        counter.style.color = '#888';
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    updateCounter('body-input', 'body-counter', 10000);
+});
+document.addEventListener('htmx:afterSwap', function() {
+    updateCounter('body-input', 'body-counter', 10000);
+});
+</script>
+

@@ -1,0 +1,32 @@
+Array
+(
+    [TIME] => 2026-02-23 18:35:12
+    [ATTACKER] => Array
+        (
+            [Name] => Szinusz
+            [XP] => Szinusz (100 XP)
+            [Base Attack Stat] => 206
+            [Wins] => 25
+            [Ammo Used] => 10
+            [Ammo Bonus %] => 5.1001001001001
+            [Vehicle Bonus Active] => NO
+            [Calculated Base Power] => 103255
+            [RNG Factor] => 0.98
+            [FINAL HARCI ERŐ PONT] => 106350.68619119
+        )
+
+    [DEFENDER] => Array
+        (
+            [Name] => nemetorszag
+            [XP] => nemetorszag (100 XP)
+            [Base Defense Stat] => 0
+            [Wins] => 0
+            [Ammo Used] => 0
+            [Ammo Bonus %] => 0
+            [Calculated Base Power] => 5
+            [RNG Factor] => 1.1
+            [FINAL HARCI ERŐ PONT] => 5.5
+            [Escaped] => NO
+        )
+
+)

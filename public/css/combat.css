@@ -1,0 +1,227 @@
+/* Combat Module Styles - Light/Standard Theme */
+
+/* Container - Inherit from global style.css (Grey #e6e6e6) */
+.combat-container {
+    /* No specific background, let it blend */
+    margin-bottom: 20px;
+    font-family: Verdana, sans-serif;
+    font-size: 11px;
+}
+
+/* Panel - Match the standard 'content-header-dark' look or similar */
+.combat-panel {
+    border: 1px solid #999;
+    background-color: #f2f2f2;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.combat-panel-header {
+    background: linear-gradient(to bottom, #4a4a4a 0%, #2a2a2a 100%);
+    /* Match content-header-dark */
+    color: #fff;
+    font-weight: bold;
+    padding: 6px 10px;
+    text-align: center;
+    border-bottom: 1px solid #000;
+}
+
+.combat-body {
+    padding: 10px;
+    color: #333;
+}
+
+
+
+/* Stats Box */
+.combat-stats {
+    display: flex;
+    justify-content: space-between;
+    background-color: #eee;
+    border: 1px solid #aaa;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    color: #000;
+    font-weight: bold;
+}
+
+.combat-stat-col {
+    width: 48%;
+}
+
+.combat-stat-row {
+    margin-bottom: 4px;
+}
+
+/* Vehicle Status Warning */
+.combat-vehicle-status {
+    background-color: #f2f2f2;
+    border: 1px solid #aaa;
+    text-align: center;
+    padding: 8px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.status-active {
+    color: #009900;
+    /* Darker Green for light bg */
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: #cc0000;
+    /* Darker Red for light bg */
+    font-weight: bold;
+}
+
+/* Section Titles */
+.combat-section-title {
+    background: linear-gradient(to bottom, #4a4a4a 0%, #333 100%);
+    color: #fff;
+    font-weight: bold;
+    padding: 5px 10px;
+    text-align: center;
+    border: 1px solid #333;
+    margin-bottom: 0;
+}
+
+/* Tables */
+.combat-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border: 1px solid #999;
+    margin-bottom: 20px;
+}
+
+.combat-table th {
+    /* Match global table headers if possible, or use the dark gradient from screenshot */
+    background: linear-gradient(to bottom, #f0f0f0 0%, #d0d0d0 100%);
+    color: #333;
+    font-weight: bold;
+    padding: 4px 6px;
+    text-align: left;
+    border-bottom: 1px solid #999;
+    border-right: 1px solid #ddd;
+    font-size: 11px;
+}
+
+/* Screenshot shows headers might be plain or simple. Let's stick to standard look. */
+.combat-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+    font-size: 11px;
+}
+
+.combat-table tr:nth-child(even) td {
+    background-color: #f5f5f5;
+}
+
+.combat-table tr:hover td {
+    background-color: #ffffcc;
+    /* Highlight hover */
+}
+
+/* Buttons */
+.btn-combat {
+    /* Standard button style from screenshot */
+    background: linear-gradient(to bottom, #f5f5f5 0%, #e0e0e0 100%);
+    border: 1px solid #999;
+    border-radius: 2px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-combat:hover {
+    background: #fff;
+    border-color: #666;
+}
+
+/* Settings Form Areas */
+.combat-settings-row {
+    display: flex;
+    gap: 15px;
+}
+
+.combat-settings-col {
+    flex: 1;
+}
+
+.combat-form-box {
+    border: 1px solid #999;
+    background: #e9e9e9;
+    padding: 10px;
+    text-align: center;
+}
+
+.combat-input {
+    border: 1px solid #999;
+    padding: 2px;
+    width: 50px;
+    text-align: center;
+}
+
+/* Combat Tooltip */
+.combat-tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.combat-details-link {
+    text-decoration: underline;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.combat-tooltip-container:hover .combat-details-link {
+    color: #000;
+}
+
+.combat-tooltip {
+    visibility: hidden;
+    width: 250px;
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 100;
+    right: 100%;
+    /* Show to the left */
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 11px;
+    line-height: 1.4;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    /* Prevent tooltip from blocking mouse */
+}
+
+.combat-tooltip::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    /* To the right of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent black;
+}
+
+.combat-tooltip-container:hover .combat-tooltip {
+    visibility: visible;
+    opacity: 1;
+}

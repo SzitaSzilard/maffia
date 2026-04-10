@@ -1,0 +1,65 @@
+<style>
+/* ========================================================== */
+/* --- ÜDVÖZLŐ DOBOZ TÖKÉLETES HAJLÍTOTT ÁRNYÉKKAL --- */
+/* ========================================================== */
+.welcome-outer {
+    position: relative;
+    background-color: #e5e5e5;
+    padding: 8px;
+    margin-bottom: 40px;
+    border: 1px solid #cccccc;
+    z-index: 1;
+}
+.welcome-outer::before, .welcome-outer::after {
+    content: "";
+    position: absolute;
+    z-index: -1; 
+    bottom: 25px; 
+    width: 45%; 
+    height: 20px; 
+    box-shadow: 0 25px 15px rgba(0, 0, 0, 0.45); 
+}
+.welcome-outer::before {
+    left: 15px;
+    transform: rotate(-4deg); 
+}
+.welcome-outer::after {
+    right: 15px;
+    transform: rotate(4deg); 
+}
+.welcome-inner {
+    background-color: #ffffff; 
+    border: 1px solid #cccccc;
+    padding: 15px 25px;
+    text-align: center;
+    color: #14406a;
+    line-height: 1.6;
+}
+
+.dark-header {
+    background-color: #333333;
+    color: #cccccc;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    border-bottom: 1px solid #1a1a1a;
+}
+</style>
+
+<div class="dark-header">
+    NetMafia.hu Online Mafia Game
+</div>
+
+<div class="welcome-outer">
+    <div class="welcome-inner">
+        Üdvözöllek <strong>{{ user.username }}</strong>, a NetMafia online mafia stratégia játék oldalán.<br>
+        Jó szórakozást kívánunk :)
+    </div>
+</div>
+
+{# Dynamic News List #}
+{% include 'game/news_list.twig' %}
+
+
